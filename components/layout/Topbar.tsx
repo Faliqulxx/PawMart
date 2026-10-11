@@ -1,0 +1,339 @@
+"use client";
+
+import React, { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  Search,
+  Bell,
+  PawPrint,
+  ChevronDown,
+  User,
+  LogOut,
+  ShieldCheck,
+  Check,
+  AlertTriangle,
+  Info,
+  Shield,
+  UserCheck,
+} from "lucide-react";
+import { useUserRole } from "@/context/UserContext";
+import { useToast } from "@/components/ui/Toast";
+
+export function Topbar() {
+  const router = useRouter();
+  const { currentUser, role, isAdmin, switchRole, logout } = useUserRole();
+  const { showToast } = useToast();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+
+  const notifications = [
+    {
+      id: "1",
+      title: "Stok Menipis!",
+      message: "Pasir Tofu Soya sisa 2 sak dan Bento sisa 4 sak.",
+      time: "10 mnt yang lalu",
+      icon: AlertTriangle,
+      color: "text-[#E5484D] bg-[#FEE2E2]",
+    },
+    {
+      id: "2",
+      title: "Pengingat Vaksin",
+      message: "Anabul 'Mochi' milik Rina Sari jadwal vaksin 15 Nov.",
+      time: "1 jam yang lalu",
+      icon: Info,
+      color: "text-[#C9772E] bg-[#FBEBDD]",
+    },
+    {
+      id: "3",
+      title: "Transaksi Berhasil",
+      message: "TRX-0018 sebesar Rp 245.000 selesai dicetak.",
+      time: "2 jam yang lalu",
+      icon: Check,
+      color: "text-[#16A34A] bg-[#DCFCE7]",
+    },
+  ];
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    router.push(`/produk?q=${encodeURIComponent(searchQuery.trim())}`);
+  };
+
+  return (
+    <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-[#ECE8E1] px-4 sm:px-6 py-3">
+      <div className="flex items-center justify-between gap-3 sm:gap-6">
+        {/* Mobile / Tablet Logo Badge */}
+        <div className="flex items-center gap-2 md:hidden">
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-[#C9772E] flex items-center justify-center text-white shadow-xs">
+              <PawPrint size={18} className="stroke-[2.5]" />
+            </div>
+            <span className="font-bold text-base text-[#1F2937] tracking-tight">
+              PawMart
+            </span>
+          </Link>
+        </div>
+
+        {/* Global Search Input */}
+        <form
+          onSubmit={handleSearchSubmit}
+          className="flex-1 max-w-md relative hidden sm:block"
+        >
+          <div className="relative">
+            <Search
+              size={16}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9CA3AF]"
+            />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Cari produk, pelanggan, atau transaksi... (tekan Enter)"
+              className="w-full pl-10 pr-4 py-2 bg-[#F7F5F1] hover:bg-[#FAF8F5] focus:bg-white text-sm text-[#1F2937] placeholder-[#9CA3AF] rounded-full border border-[#ECE8E1] focus:border-[#C9772E] focus:outline-none focus:ring-2 focus:ring-[#C9772E]/20 transition-all"
+            />
+          </div>
+        </form>
+
+        {/* Right Action Icons & User Profile */}
+        <div className="flex items-center gap-2 sm:gap-3 ml-auto">
+          {/* Role Quick Switch Pill */}
+          <div className="flex items-center bg-[#F7F5F1] p-1 rounded-full border border-[#ECE8E1]">
+            <button
+              type="button"
+              onClick={() => {
+                switchRole("admin");
+                showToast("Beralih ke peran Owner (Akses Penuh)", "info");
+              }}
+              className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition-all flex items-center gap-1 ${
+                role === "admin"
+                  ? "bg-[#C9772E] text-white shadow-xs"
+                  : "text-[#6B7280] hover:text-[#1F2937]"
+              }`}
+              title="Ganti ke peran Admin/Owner (Akses penuh seluruh fitur & laporan)"
+            >
+              <span>👑</span>
+              <span className="hidden sm:inline">Owner</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                switchRole("kasir");
+                showToast("Beralih ke peran Kasir (Operasional Kasir)", "info");
+              }}
+              className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition-all flex items-center gap-1 ${
+                role === "kasir"
+                  ? "bg-[#C9772E] text-white shadow-xs"
+                  : "text-[#6B7280] hover:text-[#1F2937]"
+              }`}
+              title="Ganti ke peran Kasir/Karyawan (Fokus POS, Antrean, dan Cek Stok)"
+            >
+              <span>👩‍💼</span>
+              <span className="hidden sm:inline">Kasir</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                switchRole("groomer");
+                showToast("Beralih ke peran Groomer (Antrean Layanan)", "info");
+              }}
+              className={`text-[11px] font-bold px-2 py-1 rounded-full transition-all flex items-center gap-1 ${
+                role === "groomer"
+                  ? "bg-[#C9772E] text-white shadow-xs"
+                  : "text-[#6B7280] hover:text-[#1F2937]"
+              }`}
+              title="Ganti ke peran Groomer (Fokus Papan Antrean & Booking Anabul)"
+            >
+              <span>✂️</span>
+              <span className="hidden sm:inline">Groomer</span>
+            </button>
+          </div>
+
+          {/* Notifications Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                setShowNotifications(!showNotifications);
+                setShowUserDropdown(false);
+              }}
+              className="relative p-2 rounded-full text-[#6B7280] hover:text-[#1F2937] hover:bg-[#F7F5F1] transition-colors focus:outline-none"
+              title="Notifikasi"
+            >
+              <Bell size={20} />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#E5484D] ring-2 ring-white"></span>
+            </button>
+
+            {showNotifications && (
+              <div className="absolute right-0 mt-2 w-80 sm:w-88 bg-white rounded-2xl shadow-xl border border-[#ECE8E1] py-2 z-50 animate-in fade-in zoom-in-95">
+                <div className="px-4 py-2.5 border-b border-[#ECE8E1] flex items-center justify-between">
+                  <h4 className="font-semibold text-sm text-[#1F2937]">Notifikasi Toko</h4>
+                  <span className="text-[11px] font-medium text-[#C9772E] bg-[#FBEBDD] px-2 py-0.5 rounded-full">
+                    3 baru
+                  </span>
+                </div>
+                <div className="divide-y divide-[#ECE8E1] max-h-72 overflow-y-auto">
+                  {notifications.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <div
+                        key={item.id}
+                        className="p-3.5 hover:bg-[#FAF8F5] transition-colors flex items-start gap-3"
+                      >
+                        <div
+                          className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${item.color}`}
+                        >
+                          <Icon size={16} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-[#1F2937]">
+                            {item.title}
+                          </p>
+                          <p className="text-[11px] text-[#6B7280] leading-snug mt-0.5">
+                            {item.message}
+                          </p>
+                          <span className="text-[10px] text-[#9CA3AF] mt-1 block">
+                            {item.time}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="p-2 border-t border-[#ECE8E1] text-center">
+                  <Link
+                    href="/stok"
+                    onClick={() => setShowNotifications(false)}
+                    className="text-xs text-[#C9772E] font-medium hover:underline"
+                  >
+                    Periksa semua peringatan stok & jadwal
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="h-6 w-px bg-[#ECE8E1] mx-0.5 hidden sm:block"></div>
+
+          {/* User Profile Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                setShowUserDropdown(!showUserDropdown);
+                setShowNotifications(false);
+              }}
+              className="flex items-center gap-2 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl hover:bg-[#F7F5F1] transition-colors focus:outline-none"
+            >
+              <div className="w-8 h-8 rounded-full bg-[#C9772E]/15 text-[#C9772E] font-bold text-xs flex items-center justify-center border border-[#C9772E]/30">
+                {currentUser.avatar}
+              </div>
+              <div className="text-left hidden md:block">
+                <span className="text-xs font-semibold text-[#1F2937] block leading-tight">
+                  {currentUser.name}
+                </span>
+                <span className="text-[10px] text-[#6B7280]">
+                  {currentUser.roleLabel}
+                </span>
+              </div>
+              <ChevronDown size={14} className="text-[#9CA3AF] hidden sm:block" />
+            </button>
+
+            {showUserDropdown && (
+              <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-[#ECE8E1] py-1.5 z-50 animate-in fade-in zoom-in-95">
+                <div className="px-4 py-2 border-b border-[#ECE8E1]">
+                  <p className="text-xs font-bold text-[#1F2937]">
+                    {currentUser.name}
+                  </p>
+                  <p className="text-[11px] text-[#6B7280]">{currentUser.email}</p>
+                  <div className="mt-1.5 inline-flex items-center gap-1 text-[10px] bg-[#DCFCE7] text-[#16A34A] px-2 py-0.5 rounded-full font-medium">
+                    <ShieldCheck size={12} /> {currentUser.roleLabel}
+                  </div>
+                </div>
+
+                <div className="p-2 border-b border-[#ECE8E1] bg-[#FAF8F5]">
+                  <p className="text-[11px] font-semibold text-[#6B7280] mb-1.5">
+                    Ganti Peran Pengguna (Simulasi):
+                  </p>
+                  <div className="grid grid-cols-3 gap-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        switchRole("admin");
+                        setShowUserDropdown(false);
+                      }}
+                      className={`text-[11px] p-1.5 rounded-lg font-bold border text-center transition-all ${
+                        role === "admin"
+                          ? "bg-[#C9772E] text-white border-[#C9772E]"
+                          : "bg-white text-[#1F2937] border-[#ECE8E1] hover:bg-[#FBEBDD]"
+                      }`}
+                    >
+                      👑 Owner
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        switchRole("kasir");
+                        setShowUserDropdown(false);
+                      }}
+                      className={`text-[11px] p-1.5 rounded-lg font-bold border text-center transition-all ${
+                        role === "kasir"
+                          ? "bg-[#C9772E] text-white border-[#C9772E]"
+                          : "bg-white text-[#1F2937] border-[#ECE8E1] hover:bg-[#FBEBDD]"
+                      }`}
+                    >
+                      👩‍💼 Kasir
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        switchRole("groomer");
+                        setShowUserDropdown(false);
+                      }}
+                      className={`text-[11px] p-1.5 rounded-lg font-bold border text-center transition-all ${
+                        role === "groomer"
+                          ? "bg-[#C9772E] text-white border-[#C9772E]"
+                          : "bg-white text-[#1F2937] border-[#ECE8E1] hover:bg-[#FBEBDD]"
+                      }`}
+                    >
+                      ✂️ Groomer
+                    </button>
+                  </div>
+                </div>
+
+                <div className="py-1">
+                  <Link
+                    href="/pengaturan"
+                    onClick={() => setShowUserDropdown(false)}
+                    className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#4B5563] hover:bg-[#F7F5F1] hover:text-[#1F2937]"
+                  >
+                    <User size={14} /> Pengaturan Akun
+                  </Link>
+                  <Link
+                    href="/pengaturan"
+                    onClick={() => setShowUserDropdown(false)}
+                    className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#4B5563] hover:bg-[#F7F5F1] hover:text-[#1F2937]"
+                  >
+                    <Shield size={14} /> Kelola Peran Kasir
+                  </Link>
+                </div>
+                <div className="border-t border-[#ECE8E1] pt-1">
+                  <button
+                    onClick={() => {
+                      setShowUserDropdown(false);
+                      logout();
+                      showToast("Sesi kasir berhasil diakhiri. Silakan login kembali.", "info");
+                      router.push("/login");
+                    }}
+                    className="flex items-center gap-2.5 w-full px-4 py-2 text-xs text-[#E5484D] hover:bg-[#FEE2E2]/50 text-left font-medium transition-colors"
+                  >
+                    <LogOut size={14} /> Keluar / Ganti Shift
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}

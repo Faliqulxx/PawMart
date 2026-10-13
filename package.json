@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "print-bridge": "node scripts/print-bridge.js",
+    "print-bridge:offline": "node scripts/print-bridge.js --offline"
   },
   "dependencies": {
     "lucide-react": "^1.55.0",

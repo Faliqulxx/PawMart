@@ -25,6 +25,9 @@ export interface ReceiptSettings {
   tampilkanKontak: boolean;
   tampilkanPoinPelanggan: boolean;
   pesanPenutup: string;
+  printerType?: "thermal" | "browser";
+  autoPrintAfterPayment?: boolean;
+  printBridgeUrl?: string;
 }
 
 export interface TaxSettings {
@@ -81,6 +84,9 @@ export const initialReceiptSettings: ReceiptSettings = {
   tampilkanKontak: true,
   tampilkanPoinPelanggan: true,
   pesanPenutup: "PawMart — Sahabat Setia Hewan Kesayangan Anda 🐾",
+  printerType: "thermal",
+  autoPrintAfterPayment: false,
+  printBridgeUrl: "http://localhost:18080",
 };
 
 export const initialTaxSettings: TaxSettings = {

@@ -1,12 +1,26 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Transaction } from "@/data/transactions";
 import { formatRupiah, formatTanggal } from "@/lib/format";
-import { Printer, CheckCircle, PawPrint, Share2 } from "lucide-react";
+import {
+  Printer,
+  PawPrint,
+  Share2,
+  CheckCircle2,
+  AlertCircle,
+  RotateCcw,
+  FileText,
+  Loader2,
+} from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
+import {
+  printThermalReceipt,
+  getPrinterConfig,
+} from "@/services/printing/printService";
+import { PrintingState } from "@/services/printing/types";
 
 interface ReceiptModalProps {
   isOpen: boolean;
@@ -20,9 +34,49 @@ export function ReceiptModal({
   transaction,
 }: ReceiptModalProps) {
   const { showToast } = useToast();
+  const [printingState, setPrintingState] = useState<PrintingState>("idle");
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
-  const handlePrint = () => {
-    // Buat iframe terisolasi khusus cetak agar tidak terpotong oleh overflow/modal dialog
+  const printerConfig = getPrinterConfig();
+
+  /**
+   * CETAK STRUK THERMAL LANGSUNG (Direct Printing ESC/POS)
+   * TIDAK memanggil window.print(), TIDAK membuka browser dialog/preview.
+   */
+  const handleThermalPrint = async () => {
+    if (printingState === "printing") return;
+
+    setPrintingState("printing");
+    setErrorMessage("");
+
+    try {
+      const result = await printThermalReceipt(transaction, printerConfig);
+
+      if (result.success) {
+        setPrintingState("success");
+        showToast("Struk berhasil dikirim ke printer.", "success");
+
+        // Kembali ke idle setelah 2.5 detik
+        setTimeout(() => {
+          setPrintingState("idle");
+        }, 2500);
+      } else {
+        setPrintingState("error");
+        setErrorMessage(result.message || "Printer thermal tidak terhubung.");
+        showToast(result.message || "Printer thermal tidak terhubung.", "error");
+      }
+    } catch {
+      setPrintingState("error");
+      setErrorMessage("Print service tidak aktif atau tidak dapat dihubungi.");
+      showToast("Print service tidak aktif.", "error");
+    }
+  };
+
+  /**
+   * CETAK VERSI PDF / A4 (Menggunakan Browser Print Dialog)
+   * Hanya dipanggil jika kasir secara eksplisit memilih cetak PDF / A4.
+   */
+  const handlePdfPrint = () => {
     let iframe = document.getElementById(
       "receipt-print-iframe"
     ) as HTMLIFrameElement | null;
@@ -227,7 +281,6 @@ export function ReceiptModal({
     iframeDoc.write(receiptHtml);
     iframeDoc.close();
 
-    // Beri jeda sejenak agar iframe selesai render lalu panggil print
     setTimeout(() => {
       iframe?.contentWindow?.focus();
       iframe?.contentWindow?.print();
@@ -390,22 +443,92 @@ export function ReceiptModal({
           </div>
         </div>
 
+        {/* Offline / Error Fallback Notice */}
+        {printingState === "error" && (
+          <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-800 space-y-2 animate-in fade-in">
+            <div className="flex items-center gap-2 font-bold text-rose-900">
+              <AlertCircle size={16} className="shrink-0 text-rose-600" />
+              <span>{errorMessage || "Printer thermal tidak terhubung."}</span>
+            </div>
+            <p className="text-[11px] text-rose-700 leading-snug">
+              Pastikan local print bridge aktif di <code>{printerConfig.bridgeUrl}</code> atau gunakan opsi Cetak PDF browser di bawah.
+            </p>
+            <div className="flex items-center gap-2 pt-1">
+              <button
+                type="button"
+                onClick={handleThermalPrint}
+                className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <RotateCcw size={13} /> Coba Lagi
+              </button>
+              <button
+                type="button"
+                onClick={handlePdfPrint}
+                className="px-3 py-1.5 rounded-lg bg-white border border-rose-300 hover:bg-rose-100 text-rose-900 font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <FileText size={13} /> Cetak PDF (Browser)
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Action Buttons */}
-        <div className="flex items-center gap-2 pt-1">
-          <Button
-            variant="outline"
-            className="flex-1"
-            onClick={handleShare}
-          >
-            <Share2 size={16} /> Salin Ringkasan
-          </Button>
-          <Button
-            variant="primary"
-            className="flex-1 shadow-md shadow-[#C9772E]/20"
-            onClick={handlePrint}
-          >
-            <Printer size={16} /> Cetak Struk (Thermal)
-          </Button>
+        <div className="space-y-2 pt-1">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              className="flex-1 text-xs"
+              onClick={handleShare}
+            >
+              <Share2 size={15} /> Salin Ringkasan
+            </Button>
+
+            <Button
+              variant="primary"
+              disabled={printingState === "printing"}
+              className={`flex-1 shadow-md text-xs transition-all ${
+                printingState === "success"
+                  ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20"
+                  : printingState === "error"
+                  ? "bg-rose-600 hover:bg-rose-700 text-white shadow-rose-600/20"
+                  : "shadow-[#C9772E]/20"
+              }`}
+              onClick={handleThermalPrint}
+            >
+              {printingState === "printing" ? (
+                <>
+                  <Loader2 size={15} className="animate-spin" />
+                  <span>⏳ Mencetak...</span>
+                </>
+              ) : printingState === "success" ? (
+                <>
+                  <CheckCircle2 size={15} />
+                  <span>✓ Struk Tercetak</span>
+                </>
+              ) : printingState === "error" ? (
+                <>
+                  <AlertCircle size={15} />
+                  <span>Cetak Gagal (Coba Lagi)</span>
+                </>
+              ) : (
+                <>
+                  <Printer size={15} />
+                  <span>Cetak Struk Thermal</span>
+                </>
+              )}
+            </Button>
+          </div>
+
+          {/* Secondary PDF/A4 browser fallback option */}
+          <div className="text-center pt-1">
+            <button
+              type="button"
+              onClick={handlePdfPrint}
+              className="text-[11px] text-[#6B7280] hover:text-[#C9772E] font-medium transition-colors hover:underline cursor-pointer inline-flex items-center gap-1"
+            >
+              <FileText size={12} /> Cetak versi Dokumen PDF / A4 (Dialog Browser)
+            </button>
+          </div>
         </div>
       </div>
     </Modal>

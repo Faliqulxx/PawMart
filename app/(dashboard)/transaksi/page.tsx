@@ -52,6 +52,10 @@ import {
   initialMemberBalances,
   memberTiers,
 } from "@/data/loyalty";
+import {
+  printThermalReceipt,
+  getPrinterConfig,
+} from "@/services/printing/printService";
 
 interface CartItemState {
   product: Product;
@@ -473,6 +477,27 @@ export default function TransaksiPage() {
     resetCart();
     setActiveReceipt(newTx);
     showToast(`Transaksi ${nextTrxNumber} berhasil diselesaikan!`, "success");
+
+    // Auto Print Thermal Receipt jika diaktifkan di Pengaturan
+    try {
+      const printerConfig = getPrinterConfig();
+      if (printerConfig.autoPrint && printerConfig.printerType === "thermal") {
+        printThermalReceipt(newTx).then((res) => {
+          if (res.success) {
+            showToast("Struk berhasil dikirim ke printer thermal.", "success");
+          } else {
+            showToast(
+              `Auto print: ${res.message}. Silakan cetak manual atau pilih PDF.`,
+              "error"
+            );
+          }
+        }).catch(() => {
+          showToast("Auto print: Print service tidak aktif.", "error");
+        });
+      }
+    } catch (err) {
+      console.warn("Gagal menjalankan auto print:", err);
+    }
   };
 
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Store,
   Users,
@@ -16,6 +16,10 @@ import {
   Clock,
   MessageCircle,
   Award,
+  Printer,
+  RefreshCw,
+  AlertCircle,
+  Check,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -33,6 +37,13 @@ import {
 import { useToast } from "@/components/ui/Toast";
 import { useUserRole } from "@/context/UserContext";
 import { Lock } from "lucide-react";
+import {
+  checkPrinterStatus,
+  testThermalPrinter,
+  getPrinterConfig,
+  savePrinterConfig,
+} from "@/services/printing/printService";
+import { PrinterConnectionStatus } from "@/services/printing/types";
 
 export default function PengaturanPage() {
   const { showToast } = useToast();
@@ -68,11 +79,80 @@ export default function PengaturanPage() {
     "Halo Kak {nama_pelanggan}! Mengingatkan jadwal perawatan {nama_hewan} pada {tanggal} jam {jam} WIB di PawMart POS."
   );
 
+  // Printer Thermal Settings State
+  const [printerStatus, setPrinterStatus] = useState<PrinterConnectionStatus>("unknown");
+  const [isCheckingPrinter, setIsCheckingPrinter] = useState(false);
+  const [isTestingPrinter, setIsTestingPrinter] = useState(false);
+
+  useEffect(() => {
+    // Sinkronkan konfigurasi printer dari storage
+    const cfg = getPrinterConfig();
+    setReceiptSettings((prev) => ({
+      ...prev,
+      lebarKertas: cfg.paperWidth,
+      printerType: cfg.printerType,
+      autoPrintAfterPayment: cfg.autoPrint,
+      printBridgeUrl: cfg.bridgeUrl,
+    }));
+
+    // Cek koneksi printer awal
+    checkPrinterStatus().then((status) => {
+      setPrinterStatus(status);
+    });
+  }, []);
+
+  const handleCheckPrinterStatus = async () => {
+    setIsCheckingPrinter(true);
+    try {
+      const status = await checkPrinterStatus();
+      setPrinterStatus(status);
+      if (status === "connected") {
+        showToast("Printer thermal terhubung dan siap mencetak!", "success");
+      } else {
+        showToast("Printer thermal tidak terhubung ke print bridge.", "error");
+      }
+    } catch {
+      setPrinterStatus("disconnected");
+      showToast("Gagal menghubungi print bridge.", "error");
+    } finally {
+      setIsCheckingPrinter(false);
+    }
+  };
+
+  const handleRunTestPrint = async () => {
+    setIsTestingPrinter(true);
+    try {
+      const res = await testThermalPrinter();
+      if (res.success) {
+        setPrinterStatus("connected");
+        showToast("Test print berhasil dikirim ke printer thermal!", "success");
+      } else {
+        setPrinterStatus("disconnected");
+        showToast(res.message || "Test print gagal: Printer tidak terhubung.", "error");
+      }
+    } catch {
+      setPrinterStatus("disconnected");
+      showToast("Test print gagal: Print service tidak aktif.", "error");
+    } finally {
+      setIsTestingPrinter(false);
+    }
+  };
+
   const handleSave = (section: string) => {
     if (!isAdmin && section !== "tampilan") {
       showToast("Akses ditolak: Hanya Owner yang dapat menyimpan pengaturan ini!", "error");
       return;
     }
+
+    if (section === "Format Struk" || section === "Printer Struk") {
+      savePrinterConfig({
+        printerType: receiptSettings.printerType || "thermal",
+        paperWidth: receiptSettings.lebarKertas,
+        autoPrint: receiptSettings.autoPrintAfterPayment ?? false,
+        bridgeUrl: receiptSettings.printBridgeUrl || "http://localhost:18080",
+      });
+    }
+
     showToast(`Pengaturan ${section} berhasil disimpan!`, "success");
   };
 
@@ -340,114 +420,302 @@ export default function PengaturanPage() {
         </div>
       )}
 
-      {/* TAB 3: PENGATURAN STRUK */}
+      {/* TAB 3: PENGATURAN STRUK & PRINTER THERMAL */}
       {activeTab === "struk" && (
-        <Card className="max-w-3xl">
-          <CardHeader>
-            <CardTitle>Konfigurasi Cetak Struk Kasir</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="text-xs font-semibold text-[#1F2937] block mb-1">
-                Lebar Kertas Printer Thermal
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { id: "58mm", label: "58 mm (Printer Kasir Mini / Bluetooth)" },
-                  { id: "80mm", label: "80 mm (Printer Desktop Standar)" },
-                ].map((p) => (
+        <div className="space-y-6 max-w-3xl">
+          {/* Section: Printer Hardware & Bridge */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Printer size={18} className="text-[#C9772E]" /> Printer Struk
+                  </CardTitle>
+                  <p className="text-xs text-[#6B7280] mt-0.5">
+                    Konfigurasi printer thermal POS direct bridge dan ukuran kertas.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
+                      printerStatus === "connected"
+                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                        : printerStatus === "disconnected"
+                        ? "bg-rose-50 text-rose-700 border border-rose-200"
+                        : "bg-amber-50 text-amber-700 border border-amber-200"
+                    }`}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        printerStatus === "connected"
+                          ? "bg-emerald-500 animate-pulse"
+                          : printerStatus === "disconnected"
+                          ? "bg-rose-500"
+                          : "bg-amber-500"
+                      }`}
+                    />
+                    {printerStatus === "connected"
+                      ? "Terhubung"
+                      : printerStatus === "disconnected"
+                      ? "Terputus"
+                      : "Memeriksa..."}
+                  </div>
                   <button
-                    key={p.id}
+                    type="button"
+                    onClick={handleCheckPrinterStatus}
+                    disabled={isCheckingPrinter}
+                    className="p-1.5 rounded-lg border border-[#ECE8E1] hover:bg-[#FAF8F5] text-[#6B7280] hover:text-[#1F2937] transition-colors"
+                    title="Cek Status Printer"
+                  >
+                    <RefreshCw
+                      size={14}
+                      className={isCheckingPrinter ? "animate-spin text-[#C9772E]" : ""}
+                    />
+                  </button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Tipe Printer */}
+              <div>
+                <label className="text-xs font-semibold text-[#1F2937] block mb-1">
+                  Printer:
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
                     type="button"
                     onClick={() =>
                       setReceiptSettings({
                         ...receiptSettings,
-                        lebarKertas: p.id as any,
+                        printerType: "thermal",
                       })
                     }
-                    className={`p-3 rounded-xl border text-xs font-bold transition-all text-left ${
-                      receiptSettings.lebarKertas === p.id
-                        ? "bg-[#C9772E] text-white border-[#C9772E]"
-                        : "bg-[#FAF8F5] text-[#1F2937] border-[#ECE8E1]"
+                    className={`p-3 rounded-xl border text-xs font-bold transition-all text-left flex items-center justify-between ${
+                      (receiptSettings.printerType || "thermal") === "thermal"
+                        ? "bg-[#C9772E] text-white border-[#C9772E] shadow-sm"
+                        : "bg-[#FAF8F5] text-[#1F2937] border-[#ECE8E1] hover:bg-white"
                     }`}
                   >
-                    {p.label}
+                    <span>🖨️ Printer Thermal (Direct POS)</span>
+                    {(receiptSettings.printerType || "thermal") === "thermal" && (
+                      <Check size={14} />
+                    )}
                   </button>
-                ))}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setReceiptSettings({
+                        ...receiptSettings,
+                        printerType: "browser",
+                      })
+                    }
+                    className={`p-3 rounded-xl border text-xs font-bold transition-all text-left flex items-center justify-between ${
+                      receiptSettings.printerType === "browser"
+                        ? "bg-[#C9772E] text-white border-[#C9772E] shadow-sm"
+                        : "bg-[#FAF8F5] text-[#1F2937] border-[#ECE8E1] hover:bg-white"
+                    }`}
+                  >
+                    <span>📄 Browser Print / PDF (A4)</span>
+                    {receiptSettings.printerType === "browser" && <Check size={14} />}
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-3 pt-2">
-              <label className="text-xs font-bold text-[#1F2937] block">
-                Pilihan Elemen Header &amp; Footer:
-              </label>
+              {/* Ukuran Kertas */}
+              <div>
+                <label className="text-xs font-semibold text-[#1F2937] block mb-1">
+                  Ukuran Kertas:
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { id: "58mm", label: "58mm (Printer Kasir Mini / Bluetooth)" },
+                    { id: "80mm", label: "80mm (Printer Desktop Standar)" },
+                  ].map((p) => {
+                    const isSelected = (receiptSettings.lebarKertas || "58mm") === p.id;
+                    return (
+                      <label
+                        key={p.id}
+                        className={`flex items-center gap-2.5 p-3 rounded-xl border text-xs font-medium cursor-pointer transition-all ${
+                          isSelected
+                            ? "bg-[#FBEBDD] border-[#C9772E] text-[#1F2937] font-bold"
+                            : "bg-[#FAF8F5] border-[#ECE8E1] text-[#4B5563] hover:bg-white"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="lebarKertas"
+                          value={p.id}
+                          checked={isSelected}
+                          onChange={() =>
+                            setReceiptSettings({
+                              ...receiptSettings,
+                              lebarKertas: p.id as any,
+                            })
+                          }
+                          className="accent-[#C9772E] w-4 h-4"
+                        />
+                        <span>{p.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
 
-              {[
-                {
-                  key: "tampilkanLogo",
-                  label: "Tampilkan Logo Paw Print di Bagian Atas",
-                },
-                {
-                  key: "tampilkanAlamat",
-                  label: "Tampilkan Alamat Lengkap Toko di Struk",
-                },
-                {
-                  key: "tampilkanKontak",
-                  label: "Tampilkan No Telepon & Website",
-                },
-                {
-                  key: "tampilkanPoinPelanggan",
-                  label: "Tampilkan Akumulasi Poin Reward Pelanggan",
-                },
-              ].map((item) => (
-                <label
-                  key={item.key}
-                  className="flex items-center gap-3 p-3 rounded-xl border border-[#ECE8E1] bg-[#FAF8F5] cursor-pointer hover:bg-white text-xs font-medium text-[#1F2937]"
-                >
+              {/* Auto Print Checkbox */}
+              <div className="pt-1">
+                <label className="flex items-start gap-3 p-3.5 rounded-xl border border-[#ECE8E1] bg-[#FAF8F5] hover:bg-white cursor-pointer transition-colors">
                   <input
                     type="checkbox"
-                    checked={(receiptSettings as any)[item.key]}
+                    checked={receiptSettings.autoPrintAfterPayment ?? false}
                     onChange={(e) =>
                       setReceiptSettings({
                         ...receiptSettings,
-                        [item.key]: e.target.checked,
+                        autoPrintAfterPayment: e.target.checked,
                       })
                     }
-                    className="accent-[#C9772E] w-4 h-4 rounded"
+                    className="accent-[#C9772E] w-4 h-4 rounded mt-0.5"
                   />
-                  <span>{item.label}</span>
+                  <div>
+                    <span className="text-xs font-bold text-[#1F2937] block">
+                      Cetak otomatis setelah pembayaran (Auto Print)
+                    </span>
+                    <span className="text-[11px] text-[#6B7280] block mt-0.5">
+                      Struk langsung dikirim ke printer thermal setelah transaksi tersimpan, tanpa membuka dialog cetak browser.
+                    </span>
+                  </div>
                 </label>
-              ))}
-            </div>
+              </div>
 
-            <div>
-              <label className="text-xs font-semibold text-[#1F2937] block mb-1">
-                Pesan Penutup Struk
-              </label>
-              <input
-                type="text"
-                value={receiptSettings.pesanPenutup}
-                onChange={(e) =>
-                  setReceiptSettings({
-                    ...receiptSettings,
-                    pesanPenutup: e.target.value,
-                  })
-                }
-                className="w-full px-3.5 py-2 rounded-xl border border-[#ECE8E1] bg-white text-xs sm:text-sm focus:outline-none focus:border-[#C9772E]"
-              />
-            </div>
+              {/* Konfigurasi Bridge URL */}
+              <div>
+                <label className="text-xs font-semibold text-[#1F2937] block mb-1">
+                  URL Local Print Bridge:
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={receiptSettings.printBridgeUrl || "http://localhost:18080"}
+                    onChange={(e) =>
+                      setReceiptSettings({
+                        ...receiptSettings,
+                        printBridgeUrl: e.target.value,
+                      })
+                    }
+                    placeholder="http://localhost:18080"
+                    className="flex-1 px-3.5 py-2 rounded-xl border border-[#ECE8E1] bg-white text-xs sm:text-sm font-mono focus:outline-none focus:border-[#C9772E]"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCheckPrinterStatus}
+                    disabled={isCheckingPrinter}
+                    className="text-xs"
+                  >
+                    {isCheckingPrinter ? "Mengecek..." : "Tes Koneksi"}
+                  </Button>
+                </div>
+                <p className="text-[11px] text-[#9CA3AF] mt-1">
+                  Service perantara lokal untuk meneruskan perintah ESC/POS ke port USB printer kasir.
+                </p>
+              </div>
 
-            <div className="pt-2 flex justify-end">
-              <Button
-                variant="primary"
-                onClick={() => handleSave("Format Struk")}
-                className="shadow-md shadow-[#C9772E]/20"
-              >
-                <Save size={16} /> Simpan Format Struk
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+              {/* Tombol Test Print */}
+              <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-[#ECE8E1]">
+                <div className="text-xs text-[#6B7280]">
+                  Gunakan Test Print untuk memastikan printer thermal siap beroperasi.
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRunTestPrint}
+                  disabled={isTestingPrinter}
+                  className="border-[#C9772E] text-[#C9772E] hover:bg-[#FBEBDD] font-bold text-xs"
+                >
+                  <Printer size={14} className={isTestingPrinter ? "animate-pulse" : ""} />
+                  {isTestingPrinter ? "Mencetak Test..." : "Test Print"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Section: Format Konten Struk */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Format &amp; Tampilan Informasi Struk</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <label className="text-xs font-bold text-[#1F2937] block">
+                  Elemen Header &amp; Footer:
+                </label>
+
+                {[
+                  {
+                    key: "tampilkanLogo",
+                    label: "Tampilkan Logo Paw Print di Bagian Atas",
+                  },
+                  {
+                    key: "tampilkanAlamat",
+                    label: "Tampilkan Alamat Lengkap Toko di Struk",
+                  },
+                  {
+                    key: "tampilkanKontak",
+                    label: "Tampilkan No Telepon & Website",
+                  },
+                  {
+                    key: "tampilkanPoinPelanggan",
+                    label: "Tampilkan Akumulasi Poin Reward Pelanggan",
+                  },
+                ].map((item) => (
+                  <label
+                    key={item.key}
+                    className="flex items-center gap-3 p-3 rounded-xl border border-[#ECE8E1] bg-[#FAF8F5] cursor-pointer hover:bg-white text-xs font-medium text-[#1F2937]"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={(receiptSettings as any)[item.key]}
+                      onChange={(e) =>
+                        setReceiptSettings({
+                          ...receiptSettings,
+                          [item.key]: e.target.checked,
+                        })
+                      }
+                      className="accent-[#C9772E] w-4 h-4 rounded"
+                    />
+                    <span>{item.label}</span>
+                  </label>
+                ))}
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-[#1F2937] block mb-1">
+                  Pesan Penutup Struk
+                </label>
+                <input
+                  type="text"
+                  value={receiptSettings.pesanPenutup}
+                  onChange={(e) =>
+                    setReceiptSettings({
+                      ...receiptSettings,
+                      pesanPenutup: e.target.value,
+                    })
+                  }
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#ECE8E1] bg-white text-xs sm:text-sm focus:outline-none focus:border-[#C9772E]"
+                />
+              </div>
+
+              <div className="pt-2 flex justify-end">
+                <Button
+                  variant="primary"
+                  onClick={() => handleSave("Printer Struk")}
+                  className="shadow-md shadow-[#C9772E]/20"
+                >
+                  <Save size={16} /> Simpan Pengaturan Struk
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* TAB 4: PAJAK & BIAYA */}

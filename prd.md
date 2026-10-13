@@ -1,289 +1,300 @@
-# PRD: PawMart POS (Tahap Tampilan / UI Only)
+# Product Requirement Document (PRD): PawMart POS
 
-**Versi:** 1.0
-**Tanggal:** 11 Oktober 2026
-**Status:** Draft
-**Lingkup:** Frontend saja dengan data dummy (tanpa backend dan database)
+**Aplikasi Point of Sale (POS) & Manajemen Operasional Pet Shop Modern**
+
+* **Nama Proyek:** PawMart POS
+* **Versi Dokumen:** 2.0 (Master Comprehensive PRD)
+* **Tanggal Pembaruan:** 13 Oktober 2026
+* **Status Proyek:** Active Development / Production-Ready Frontend with Local Persistence
+* **Repository GitHub:** [https://github.com/Faliqulxx/PawMart](https://github.com/Faliqulxx/PawMart)
 
 ---
 
-## 1. Ringkasan
+## 1. Ringkasan Eksekutif (Executive Summary)
 
-PawMart POS adalah aplikasi web kasir untuk toko pet shop. Tahap ini hanya membangun **tampilan (UI)** yang responsif untuk laptop, tablet, dan handphone, dengan **data dummy statis**. Tujuannya untuk validasi desain dan alur sebelum backend dibuat.
+**PawMart POS** adalah sistem aplikasi web kasir (*Point of Sale*) dan manajemen operasional terpadu yang dirancang khusus untuk memenuhi kebutuhan bisnis toko hewan peliharaan (*Pet Shop*), salon perawatan (*Pet Grooming*), klinik vaksinasi, dan penitipan hewan (*Pet Hotel / Boarding*).
 
-Tampilan mengacu pada gambar referensi: gaya bersih, latar krem hangat, aksen oranye, kartu putih bersudut membulat.
+Sistem ini memecahkan inefisiensi pencatatan manual dan sistem kasir konvensional yang sering kali memisahkan penjualan barang ritel dengan reservasi jasa perawatan. PawMart POS mengintegrasikan seluruh lini operasional: dari penjualan barang kasir, manajemen stok opname, CRM data pelanggan dan riwayat anabul, antrean layanan grooming, reservasi kamar pet hotel, sistem loyalitas member & voucher promo, hingga audit laporan laba rugi dalam satu dasbor yang responsif di desktop, tablet, dan smartphone.
 
-## 2. Tujuan dan Non-Tujuan
+---
 
-### Tujuan
-- Membuat seluruh halaman utama sesuai menu sidebar dengan tampilan konsisten.
-- Responsif di tiga ukuran layar: laptop, tablet, handphone.
-- Semua data berasal dari file dummy lokal agar mudah diganti dengan API nanti.
-- Komponen reusable supaya mudah disambungkan ke Supabase pada tahap berikutnya.
+## 2. Arsitektur Teknologi (Tech Stack)
 
-### Non-Tujuan (tidak dikerjakan sekarang)
-- Autentikasi sungguhan, database, dan API.
-- Integrasi printer, scanner barcode, dan payment gateway.
-- Mode offline dan sinkronisasi data.
-- Logika bisnis kompleks (perhitungan pajak nyata, validasi stok sungguhan).
-
-## 3. Tech Stack
-
-| Kebutuhan | Pilihan |
-|---|---|
-| Framework | Next.js (App Router) + React |
-| Bahasa | TypeScript |
-| Styling | Tailwind CSS |
-| Ikon | lucide-react |
-| Grafik | Recharts |
-| State | React state / Zustand (ringan, untuk keranjang POS) |
-| Data | File dummy di `/data/*.ts` |
-| Supabase | Disiapkan untuk tahap berikutnya, belum dipakai |
-
-## 4. Design System (Referensi Gambar)
-
-### 4.1 Warna
-
-| Token | Hex (perkiraan) | Penggunaan |
+| Komponen | Teknologi | Keterangan & Peran |
 |---|---|---|
-| `primary` | `#C9772E` | Menu sidebar aktif, tombol utama, logo, ikon aktif |
-| `primary-hover` | `#B56A27` | Hover tombol utama |
-| `primary-soft` | `#FBEBDD` | Latar badge "WEB APPLICATION", highlight ringan |
-| `chart-bar` | `#E9A464` | Batang grafik penjualan |
-| `bg-page` | `#F7F5F1` | Latar halaman (krem) |
-| `bg-card` | `#FFFFFF` | Kartu, tabel, topbar |
-| `border` | `#ECE8E1` | Garis kartu dan pemisah tabel |
-| `text-primary` | `#1F2937` | Judul dan angka utama |
-| `text-secondary` | `#6B7280` | Label, subjudul, teks pendukung |
-| `success` | `#16A34A` | Teks persentase naik, status selesai |
-| `success-soft` | `#DCFCE7` | Latar badge "Selesai" |
-| `danger` | `#E5484D` | Peringatan "Perlu diperiksa", stok menipis |
-| `danger-soft` | `#FEE2E2` | Latar badge bahaya |
-| `warning` | `#F59E0B` | Status pending / ditahan |
+| **Framework** | Next.js 15+ (App Router) & React 19 | Server & Client Components modern, performa tinggi, dan routing modular |
+| **Bahasa Pemrograman** | TypeScript (Strict Mode) | Keamanan tipe data end-to-end pada entitas data master |
+| **Styling & Desain** | Tailwind CSS v4 & Lucide React | Desain hangat bernuansa pet shop (*Warm Orange & Cream Palette*) |
+| **Visualisasi Data** | Recharts | Grafik batang dan lingkaran responsif untuk analitik penjualan |
+| **State & Penyimpanan** | React Context (`UserContext`) + `localStorage` & `sessionStorage` | Sinkronisasi data real-time, persistensi gambar upload, dan interoperabilitas antar modul |
+| **Pencetakan Struk** | Native Browser Isolated Print Iframe | Cetak struk termal format 58mm/80mm tanpa terpotong modal dialog |
 
-> Warna adalah perkiraan dari gambar. Boleh disesuaikan sedikit selama nuansa oranye hangat dan krem tetap terjaga.
+---
 
-### 4.2 Tipografi
-- Font: **Inter** (atau Plus Jakarta Sans sebagai alternatif).
-- Judul halaman: 24px, semibold.
-- Angka statistik: 24 sampai 28px, bold.
-- Label dan teks tabel: 12 sampai 14px, regular.
-- Teks sekunder: 12px, warna `text-secondary`.
+## 3. Desain Sistem & Identitas Visual
 
-### 4.3 Komponen Dasar
-- **Kartu:** latar putih, radius 12px, border `border`, bayangan sangat tipis.
-- **Tombol utama:** latar `primary`, teks putih, radius 8px.
-- **Badge status:** pill kecil, latar lembut dan teks tebal sewarna.
-- **Input pencarian:** radius penuh, ikon kaca pembesar di kiri, latar putih.
-- **Sidebar aktif:** blok oranye penuh dengan ikon dan teks putih.
-- **Tabel:** header abu muda, baris dipisah garis tipis, tanpa zebra.
+Aplikasi mengusung identitas visual **Warm & Premium Pet Care** yang ramah anabul, bersih, dan modern:
 
-### 4.4 Breakpoint
+* **Warna Primer (`#C9772E`):** Warna oranye hangat untuk tombol aksi utama, navigasi aktif, dan branding.
+* **Warna Latar (`#F7F5F1` & `#FAF8F5`):** Latar krem lembut yang nyaman di mata untuk pemakaian kasir seharian.
+* **Warna Kartu (`#FFFFFF` border `#ECE8E1`):** Kartu putih bersudut melengkung (*rounded-2xl*) dengan garis pembatas halus.
+* **Tipografi:** Sans-serif modern (*Plus Jakarta Sans / Inter*) dengan ketebalan visual kontras.
+* **Aset Gambar Bebas Emoji:** Seluruh produk, staf, dan kartu layanan menggunakan visual SVG/gambar riil berkualitas tinggi dengan komponen gambar pintar [`ProductImage.tsx`](file:///e:/PoS/PawMart%20POS/components/ui/ProductImage.tsx) yang memiliki penanganan *fallback* otomatis.
 
-| Perangkat | Lebar | Layout |
-|---|---|---|
-| Laptop / desktop | ≥ 1024px | Sidebar tetap + konten penuh |
-| Tablet | 640 sampai 1023px | Sidebar ringkas (ikon + teks kecil) atau bisa dilipat, grid 2 kolom |
-| Handphone | < 640px | Tanpa sidebar, **bottom navigation** dan menu grid |
+---
 
-## 5. Struktur Navigasi
+## 4. Modul & Fitur-Fitur Utama
 
-### Sidebar (laptop dan tablet)
-1. Dashboard
-2. Transaksi
-3. Produk
-4. Stok
-5. Pelanggan
-6. Laporan
-7. Pengaturan
-
-### Topbar
-- Logo **PawMart** (ikon telapak oranye)
-- Kolom pencarian: "Cari produk, pelanggan, atau transaksi..."
-- Ikon notifikasi (bell)
-- Avatar dan nama pengguna ("Admin") dengan dropdown
-
-### Bottom Navigation (handphone)
-Beranda, Transaksi, Produk, Lainnya
-
-## 6. Spesifikasi Halaman
-
-### 6.1 Dashboard (sesuai referensi)
-**Header:** "Halo, Admin 👋" dan subjudul "Selamat datang kembali di PawMart."
-
-**Empat kartu statistik:**
-
-| Kartu | Nilai | Keterangan |
-|---|---|---|
-| Total Penjualan Hari Ini | Rp 2.450.000 | ↑ 12% dari kemarin (hijau) |
-| Jumlah Transaksi | 18 | ↑ 25% dari kemarin |
-| Produk Terjual | 45 | ↑ 18% dari kemarin |
-| Stok Menipis | 6 | "Perlu diperiksa" (merah) |
-
-**Grafik Penjualan:** bar chart 7 hari terakhir, dengan dropdown filter periode ("7 Hari Terakhir", "30 Hari", "Bulan Ini"). Sumbu Y dalam juta (1 jt sampai 4 jt).
-
-**Produk Terlaris:** daftar 5 produk dengan gambar, nama, kategori, dan jumlah terjual.
-
-**Transaksi Terbaru:** tabel dengan kolom No. Transaksi, Tanggal, Pelanggan, Total, Status. Ada tautan "Lihat semua".
-
-**Responsif:**
-- Laptop: statistik 4 kolom, grafik dan produk terlaris berdampingan, tabel di bawah grafik.
-- Tablet: statistik 4 kolom kecil, grafik di atas, produk terlaris dan tabel disusun ulang ke bawah.
-- Handphone: menu cepat grid 3x2 (Transaksi POS, Produk, Stok, Pelanggan, Laporan, Pengaturan), kartu "Penjualan Hari Ini", lalu daftar transaksi terbaru ringkas.
-
-### 6.2 Transaksi (Kasir / POS)
-- Layout dua panel: **katalog produk** (kiri) dan **keranjang** (kanan).
-- Katalog: pencarian, filter kategori (chip), grid kartu produk (gambar, nama, harga, stok), tombol tambah.
-- Keranjang: daftar item dengan tombol plus/minus, hapus item, input diskon, ringkasan subtotal, pajak, dan total.
-- Pilih pelanggan (dropdown dari data dummy) dan metode bayar (Tunai, QRIS, Transfer, Kartu).
-- Tombol **Bayar** membuka modal pembayaran dummy: input uang diterima, kembalian otomatis, tombol selesai yang menampilkan modal struk.
-- Tombol **Tahan Transaksi** (hanya mengubah state lokal).
-- Handphone: keranjang tampil sebagai bottom sheet.
-- Tab tambahan: **Riwayat Transaksi** berupa tabel dengan filter tanggal dan status, klik baris membuka detail struk.
-
-### 6.3 Produk
-- Tabel/daftar produk: gambar, nama, SKU, kategori, harga beli, harga jual, stok, status.
-- Pencarian, filter kategori, dan tombol **+ Tambah Produk**.
-- Modal form tambah/ubah produk (nama, SKU, barcode, kategori, harga, stok, satuan, tanggal kedaluwarsa). Data hanya disimpan di state lokal.
-- Handphone: tampilan kartu bertumpuk menggantikan tabel.
-
-### 6.4 Stok
-- Ringkasan: total produk, stok menipis, hampir kedaluwarsa, stok habis.
-- Tabel stok dengan indikator warna (aman, menipis, habis).
-- Daftar peringatan kedaluwarsa (makanan dan obat).
-- Tombol **Penyesuaian Stok** membuka modal dummy.
-- Tab Riwayat Mutasi Stok (masuk, keluar, penyesuaian).
-
-### 6.5 Pelanggan
-- Daftar pelanggan: nama, nomor HP, total belanja, poin, kunjungan terakhir.
-- Halaman detail pelanggan: profil, **daftar hewan peliharaan** (nama, jenis, ras, umur), riwayat belanja, dan jadwal vaksin berikutnya.
-- Tombol **+ Tambah Pelanggan**.
-
-### 6.6 Laporan
-- Filter periode (hari ini, 7 hari, 30 hari, kustom).
-- Kartu ringkasan: omzet, laba kotor, jumlah transaksi, rata-rata nilai transaksi.
-- Grafik penjualan (garis atau batang), grafik penjualan per kategori (donut), dan tabel produk terlaris.
-- Tombol **Ekspor** (tampilan saja, menampilkan toast "Fitur segera hadir").
-
-### 6.7 Pengaturan
-- Tab: Profil Toko, Pengguna & Peran, Struk, Pajak, Tampilan.
-- Form dengan data dummy. Tombol simpan hanya menampilkan toast sukses.
-
-## 7. Data Dummy
-
-Simpan di folder `/data` dan semuanya diketik dengan TypeScript.
-
-### 7.1 Statistik Dashboard
-```ts
-export const stats = {
-  penjualanHariIni: 2450000,
-  jumlahTransaksi: 18,
-  produkTerjual: 45,
-  stokMenipis: 6,
-  perubahan: { penjualan: 12, transaksi: 25, produk: 18 },
-};
+```mermaid
+graph TD
+    A[PawMart POS Core] --> B[1. Dashboard Eksekutif]
+    A --> C[2. Kasir POS & Billing Engine]
+    A --> D[3. Master Data Produk]
+    A --> E[4. Manajemen Stok & Mutasi]
+    A --> F[5. CRM Pelanggan & Profil Anabul]
+    A --> G[6. Layanan Grooming & Pet Hotel]
+    A --> H[7. Booking & Jadwal Reservasi]
+    A --> I[8. Program Loyalitas & Member]
+    A --> J[9. Laporan Keuangan & Analitik]
+    A --> K[10. Pengaturan & RBAC User Role]
 ```
 
-### 7.2 Grafik Penjualan 7 Hari
-| Tanggal | Nilai (Rp) |
-|---|---|
-| 12 Okt | 1.700.000 |
-| 13 Okt | 2.400.000 |
-| 14 Okt | 1.900.000 |
-| 15 Okt | 3.200.000 |
-| 16 Okt | 2.000.000 |
-| 16 Okt* | 2.400.000 |
-| 17 Okt | 3.000.000 |
-| 18 Okt | 2.350.000 |
+### 4.1 Dashboard Eksekutif ([`app/(dashboard)/page.tsx`](file:///e:/PoS/PawMart%20POS/app/(dashboard)/page.tsx))
+* **Metrik Real-time:** Menampilkan 4 kartu statistik utama: Total Penjualan Hari Ini, Jumlah Transaksi Kasir, Total Unit Produk Terjual, dan Peringatan Stok Menipis.
+* **Grafik Tren Penjualan:** Visualisasi batang interaktif dengan filter dinamis (7 Hari Terakhir, 30 Hari Terakhir, dan Bulan Ini).
+* **Widget Produk Terlaris:** Peringkat 5 produk paling laku dilengkapi visual gambar, kategori, unit terjual, dan omzet.
+* **Daftar Transaksi Terkini:** Tabel transaksi langsung dengan status pembayaran dan tautan cepat ke cetak struk.
+* **Akses Cepat Mobile:** Menu *quick grid* untuk perangkat smartphone guna mempercepat pembukaan kasir, antrean, dan pendaftaran booking.
 
-*Pada referensi terdapat dua label "16 Okt"; gunakan 7 titik data yang berurutan saja (12 sampai 18 Okt).
+### 4.2 Kasir POS & Billing Engine ([`app/(dashboard)/transaksi/page.tsx`](file:///e:/PoS/PawMart%20POS/app/(dashboard)/transaksi/page.tsx))
+* **Dual-Panel Workspace:** Panel katalog pencarian produk (dengan filter chip kategori) di sebelah kiri, dan keranjang belanja aktif di sebelah kanan.
+* **Penyesuaian Harga Khusus (Owner/Admin Discount):** Pemilik toko dapat menyesuaikan harga satuan item langsung dari keranjang untuk pelanggan khusus atau promo fleksibel.
+* **Kalkulator Diskon & Pajak:** Dukungan diskon nominal (Rp), diskon persentase (%), diskon cepat kasir Rp 1.000, serta saklar PPN 11%.
+* **Sistem Tahan & Lanjutkan Transaksi (*Hold Bill*):** Kasir dapat menahan transaksi pelanggan yang masih mengambil barang lain tanpa mengganggu antrean kasir lainnya.
+* **Modal Pembayaran Multimetode:** Mendukung Tunai (dengan kalkulator kembalian otomatis), QRIS, Transfer Bank, dan Kartu Debit/Kredit.
+* **Cetak Struk Termal:** Modal struk interaktif dengan tombol cetak langsung ke printer kasir format struk toko resmi via isolated iframe.
 
-### 7.3 Produk Terlaris
-| Produk | Kategori | Terjual |
-|---|---|---|
-| Royal Canin Adult | Makanan Kucing 1kg | 32 |
-| Whiskas Tuna | Makanan Kucing 1kg | 28 |
-| Pedigree Adult | Makanan Anjing 1kg | 20 |
-| Tempat Makan | Aksesoris | 15 |
-| Mainan Kucing | Aksesoris | 12 |
+### 4.3 Master Data Katalog Produk ([`app/(dashboard)/produk/page.tsx`](file:///e:/PoS/PawMart%20POS/app/(dashboard)/produk/page.tsx))
+* **Standarisasi 2 Produk per Kategori:** Memiliki 12 produk pilihan unggulan yang terbagi rata ke dalam 6 kategori:
+  1. *Makanan Kucing:* Royal Canin Adult Cat 1kg, Whiskas Tuna Adult 1kg
+  2. *Makanan Anjing:* Pedigree Adult Beef & Veg 1kg, Pro Plan Puppy Chicken Rice 2.5kg
+  3. *Aksesoris:* Tempat Makan Stainless Anti-Semut, Mainan Kucing Laser & Bulu Interaktif
+  4. *Pasir:* Pasir Kucing Bento Gumpal Apel 10L, Pasir Tofu Soya Kopi 7L
+  5. *Obat & Vitamin:* Nutri-Plus Gel Virbac 120g, Minyak Ikan Salmon Omega 3 (100 Kapsul)
+  6. *Kandang:* Kandang Kucing Besi Lipat 60x42x50cm, Pet Cargo Travel Box Ukuran M
+* **Upload Foto Mandiri (*Custom Image Upload*):** Pengguna dapat mengunggah foto produk langsung dari file komputer/HP (JPG, PNG, WEBP, SVG hingga 5MB), menampilkan *live preview box*, atau menempelkan URL gambar eksternal.
+* **Penyimpanan Gambar Persisten:** Foto yang diunggah dikonversi ke Base64 Data URL dan disimpan ke `localStorage` (`pawmart_products_v2`), sehingga langsung tampil sinkron di Kasir POS, Manajemen Stok, dan Laporan.
+* **Audit & Filter Cepat:** Pencarian multi-parameter berdasarkan SKU, barcode, nama produk, kategori, dan status stok (Aman, Menipis, Habis).
 
-### 7.4 Transaksi Terbaru
-| No. Transaksi | Tanggal | Pelanggan | Total | Status |
-|---|---|---|---|---|
-| TRX-0018 | 18 Okt 2025 | Pelanggan Umum | Rp 245.000 | Selesai |
-| TRX-0017 | 18 Okt 2025 | Rina Sari | Rp 420.000 | Selesai |
-| TRX-0016 | 17 Okt 2025 | Andri Pratama | Rp 190.000 | Selesai |
-| TRX-0015 | 17 Okt 2025 | Siti Nurhaliza | Rp 350.000 | Selesai |
+### 4.4 Manajemen Stok & Mutasi ([`app/(dashboard)/stok/page.tsx`](file:///e:/PoS/PawMart%20POS/app/(dashboard)/stok/page.tsx))
+* **Daftar Stok Real-time:** Menampilkan stok terkini, batas minimum (*buffer stock*), satuan kemasan, dan tanggal kedaluwarsa.
+* **Early Expiry Alert:** Banner peringatan khusus untuk produk makanan atau obat-obatan yang mendekati tanggal kedaluwarsa.
+* **Form Penyesuaian Stok (Stock Opname):** Form pencatatan Barang Masuk (+), Barang Keluar (-), atau Koreksi Fisik Opname lengkap dengan alasan (Pembelian, Retur, Rusak, Selisih Fisik).
+* **Riwayat Mutasi Stok:** Audit log komprehensif mencatat tanggal, nama barang, pergeseran stok (Sebelum → Sesudah), dan nama petugas yang bertindak.
 
-### 7.5 Data Tambahan yang Perlu Dibuat
-- **Produk:** minimal 20 item dalam kategori Makanan Kucing, Makanan Anjing, Aksesoris, Pasir, Obat & Vitamin, Kandang. Setiap item punya id, nama, SKU, harga beli, harga jual, stok, stok minimum, satuan, gambar, tanggal kedaluwarsa.
-- **Pelanggan:** minimal 10 orang, masing-masing punya 1 sampai 2 hewan peliharaan.
-- **Transaksi:** minimal 30 riwayat, lengkap dengan item dan metode bayar.
-- **Pengguna:** Admin, Kasir, Groomer (untuk halaman Pengaturan).
-- Gambar produk memakai placeholder ilustrasi atau emoji agar tidak bergantung aset eksternal.
+### 4.5 CRM Pelanggan & Rekam Medis Anabul ([`app/(dashboard)/pelanggan/page.tsx`](file:///e:/PoS/PawMart%20POS/app/(dashboard)/pelanggan/page.tsx))
+* **Buku Kontak Pelanggan:** Database nomor WhatsApp, alamat, akumulasi poin loyalitas, total pengeluaran belanja (*lifetime spend*), dan tier status.
+* **Kartu Identitas Anabul (*Pet Profile*):** Setiap pelanggan dapat memiliki beberapa profil hewan peliharaan (Nama anabul, spesies Kucing/Anjing, ras, jenis kelamin, usia, dan berat badan).
+* **Jadwal Vaksinasi & Riwayat Perawatan:** Pengingat jadwal vaksin anabul berikutnya dan catatan alergi/kondisi kesehatan khusus sebelum tindakan salon grooming.
 
-## 8. Struktur Folder yang Disarankan
+### 4.6 Layanan Jasa Grooming & Pet Hotel ([`app/(dashboard)/layanan/page.tsx`](file:///e:/PoS/PawMart%20POS/app/(dashboard)/layanan/page.tsx))
+* **Katalog Jasa:** Menu paket grooming (Basic Mandi, Kutu & Jamur, Grooming Lengkap), penitipan harian/inap (Kamar Standard, Deluxe, VIP Room), dan layanan medis dokter hewan.
+* **Papan Antrean Grooming (*Kanban Board*):** Memantau alur pengerjaan grooming dari status *Menunggu*, *Sedang Dikerjakan (In-Progress)*, hingga *Selesai*.
+* **Manajemen Check-in & Check-out Pet Hotel:** Form registrasi kamar inap, nomor kontak darurat, titipan pakan, kalkulasi durasi menginap, serta tombol langsung **Check-out ke Kasir POS**.
 
+### 4.7 Reservasi Jadwal & Booking ([`app/(dashboard)/booking/page.tsx`](file:///e:/PoS/PawMart%20POS/app/(dashboard)/booking/page.tsx))
+* **Kalender Booking:** Memantau kapasitas layanan harian untuk mencegah *double booking* kapasitas meja grooming atau kamar hotel.
+* **Form Reservasi Baru:** Pemilihan tanggal, time slot (misal: 09:00, 11:00, 14:00), pemilihan groomer/staf penanggung jawab, dan catatan khusus pelanggan.
+* **Status Reservasi:** Konfirmasi, Selesai, Menunggu Kedatangan, atau Batal.
+
+### 4.8 Program Loyalitas, Member Tier, & Voucher ([`app/(dashboard)/loyalitas/page.tsx`](file:///e:/PoS/PawMart%20POS/app/(dashboard)/loyalitas/page.tsx))
+* **Tingkatan Member (Member Tiers):**
+  * *Bronze:* Standar baru mendaftar (Multiplier Poin 1.0x).
+  * *Silver:* Belanja > Rp 1.500.000 (Multiplier Poin 1.2x).
+  * *Gold:* Belanja > Rp 3.000.000 (Multiplier Poin 1.5x + Promo Khusus).
+  * *Platinum:* Belanja VIP > Rp 5.000.000 (Multiplier Poin 2.0x + Prioritas Grooming).
+* **Poin Belanja Kasir:** Tiap pembelanjaan Rp 10.000 menghasilkan poin yang dapat dipotong langsung sebagai diskon kasir (1 poin = Rp 100).
+* **Katalog Voucher Diskon:** Voucher diskon nominal atau persen yang dapat dipilih kasir di keranjang belanja dengan verifikasi minimum belanja.
+
+### 4.9 Laporan Keuangan & Analitik ([`app/(dashboard)/laporan/page.tsx`](file:///e:/PoS/PawMart%20POS/app/(dashboard)/laporan/page.tsx))
+* **Laporan Pendapatan Gabungan:** Memisahkan omzet penjualan produk ritel vs omzet jasa salon grooming & pet hotel.
+* **Metrik Margin Keuntungan:** Perhitungan omzet, estimasi modal beli (HPP), dan estimasi laba kotor.
+* **Komposisi Kategori & Kinerja Kasir:** Diagram kontribusi per kategori barang dan rekapan produktivitas staf salon/kasir.
+
+### 4.10 Pengaturan & Role-Based Access Control / RBAC ([`app/(dashboard)/pengaturan/page.tsx`](file:///e:/PoS/PawMart%20POS/app/(dashboard)/pengaturan/page.tsx))
+* **Sistem Peran Fleksibel (`UserContext.tsx`):**
+  * **Owner (Pemilik Toko):** Akses penuh ke seluruh menu, laporan laba, manipulasi harga manual, dan manajemen staf.
+  * **Admin:** Akses penuh operasional produk, stok, kasir, dan pelanggan.
+  * **Kasir:** Akses fokus pada transaksi kasir, input booking, penukaran voucher, dan cek ketersediaan stok (tanpa akses edit HPP / ubah sistem).
+  * **Groomer:** Akses khusus antrean grooming, checklist kondisi hewan, dan status pengerjaan anabul.
+* **Konfigurasi Toko:** Profil outlet PawMart, alamat struk, nomor WhatsApp outlet, dan konfigurasi persentase pajak PPN.
+
+---
+
+## 5. Hubungan & Relasi Antar Fitur (Feature Relationships)
+
+PawMart POS dibangun dengan filosofi **arsitektur terintegrasi**, di mana sebuah aksi pada satu modul secara otomatis memicu reaksi data pada modul lainnya:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Pelanggan as Pelanggan & Anabul
+    participant Jasa as Layanan Grooming / Hotel
+    participant POS as Kasir POS
+    participant CRM as CRM & Loyalitas
+    participant Stok as Manajemen Stok
+    participant Lap as Dashboard & Laporan
+
+    Pelanggan->>Jasa: 1. Booking / Check-in Layanan
+    Jasa->>Jasa: 2. Pengerjaan di Antrean Grooming
+    Jasa->>POS: 3. Layanan Selesai -> Push Tagihan Otomatis via Session
+    Pelanggan->>POS: 4. Beli Produk Tambahan (Makanan/Pasir)
+    POS->>Stok: 5. Potong Stok Barang Terjual
+    Stok->>Stok: 6. Catat Log Mutasi Penjualan
+    POS->>CRM: 7. Hitung Poin Member & Terapkan Voucher
+    POS->>Pelanggan: 8. Cetak Struk Transaksi Resmi
+    POS->>Lap: 9. Rekam Transaksi ke Laporan Omzet & Dashboard
 ```
-pawmart-pos/
-├── app/
-│   ├── (dashboard)/
-│   │   ├── layout.tsx          # sidebar + topbar + bottom nav
-│   │   ├── page.tsx            # Dashboard
-│   │   ├── transaksi/page.tsx
-│   │   ├── produk/page.tsx
-│   │   ├── stok/page.tsx
-│   │   ├── pelanggan/page.tsx
-│   │   ├── laporan/page.tsx
-│   │   └── pengaturan/page.tsx
-│   └── globals.css
-├── components/
-│   ├── layout/   (Sidebar, Topbar, BottomNav)
-│   ├── ui/       (Card, Button, Badge, Table, Modal, Input, Toast)
-│   ├── dashboard/(StatCard, SalesChart, TopProducts, RecentTransactions)
-│   └── pos/      (ProductGrid, Cart, PaymentModal, Receipt)
-├── data/         (stats.ts, products.ts, customers.ts, transactions.ts)
-├── lib/          (format.ts untuk rupiah dan tanggal, utils.ts)
-└── tailwind.config.ts            # token warna dari bagian 4.1
+
+### 5.1 Relasi Layanan Jasa ↔ Kasir POS
+* Ketika layanan grooming selesai dikerjakan atau tamu anabul di Pet Hotel melakukan *Check-out*, staf cukup menekan tombol **"Selesaikan & Bayar"**.
+* Sistem menyimpan paket jasa beserta harga ke `sessionStorage` (`pawmart_pending_service_checkout`) dan secara otomatis mengarahkan ke halaman Kasir POS.
+* Kasir tidak perlu mengetik ulang harga jasa; item jasa langsung masuk ke keranjang belanja aktif lengkap dengan nama pelanggan yang terpilih.
+
+### 5.2 Relasi Kasir POS ↔ Manajemen Stok & Mutasi
+* Setiap transaksi penjualan produk ritel yang diselesaikan di Kasir POS akan mengurangi jumlah stok produk terkait di database lokal secara instan.
+* Pengurangan stok mencatat entri otomatis pada **Riwayat Mutasi Stok** dengan jenis mutasi *"Keluar"* dan alasan *"Penjualan Kasir No. TRX-XXXX"*.
+* Jika stok mencapai angka di bawah batas `stokMin`, sistem langsung menyalakan badge *"Stok Menipis"* pada Dashboard dan halaman Stok.
+
+### 5.3 Relasi Kasir POS ↔ CRM Pelanggan & Program Loyalitas
+* Kasir dapat memilih data pelanggan dari database CRM.
+* Saat pelanggan dipilih, sistem membaca tier member (Bronze/Silver/Gold/Platinum) dan saldo poin yang dimiliki pelanggan.
+* Pelanggan dapat menukarkan poin mereka untuk memotong total bayar kasir.
+* Setelah transaksi selesai, nilai pembelanjaan baru diakumulasikan ke total belanja pelanggan (*lifetime spend*). Poin baru ditambahkan sesuai *multiplier tier*, dan sistem mengevaluasi kenaikan tier secara otomatis.
+
+### 5.4 Relasi Master Produk (Foto & 2 per Kategori) ↔ Seluruh Modul
+* Setiap penambahan, penghapusan, atau pengubahan produk dan foto di menu **Produk** langsung disimpan ke `localStorage` (`pawmart_products_v2`).
+* Halaman Kasir POS ([`transaksi`](file:///e:/PoS/PawMart%20POS/app/(dashboard)/transaksi/page.tsx)), Manajemen Stok ([`stok`](file:///e:/PoS/PawMart%20POS/app/(dashboard)/stok/page.tsx)), Widget Dashboard ([`TopProducts.tsx`](file:///e:/PoS/PawMart%20POS/components/dashboard/TopProducts.tsx)), dan Laporan Penjualan langsung membaca data dan foto yang sama, memastikan data produk selalu konsisten di semua layar.
+
+### 5.5 Relasi Role Access (RBAC) ↔ Antarmuka Pengguna
+* Hak akses yang diatur pada `UserContext.tsx` secara proaktif menyaring komponen UI:
+  * Kasir tidak dapat melihat modal harga beli produk (*HPP*) dan tidak dapat mengubah stok opname secara sepihak.
+  * Hanya Owner/Admin yang memiliki akses tombol *Reset Default*, ubah harga khusus di keranjang kasir, dan pengaturan sistem toko.
+
+---
+
+## 6. Struktur Data Master (Data Schemas)
+
+### 6.1 Skema Produk (`Product`)
+```typescript
+export interface Product {
+  id: string;                      // Contoh: "PROD-001"
+  nama: string;                    // Contoh: "Royal Canin Adult Cat 1kg"
+  sku: string;                     // Contoh: "RC-CAT-01"
+  barcode: string;                 // Barcode scan 10-13 digit
+  kategori: "Makanan Kucing" | "Makanan Anjing" | "Aksesoris" | "Pasir" | "Obat & Vitamin" | "Kandang";
+  hargaBeli: number;               // Harga pokok pembelian (HPP)
+  hargaJual: number;               // Harga ritel kasir
+  stok: number;                    // Kuantitas stok aktif
+  stokMin: number;                 // Batas peringatan stok menipis
+  satuan: string;                  // Pcs, Sak, Botol, Tube, Unit
+  gambar?: string;                 // URL publik atau Data URL Base64 hasil upload mandiri
+  icon?: string;                   // Alias kompatibilitas visual gambar
+  tanggalKedaluwarsa?: string;     // Format YYYY-MM-DD
+  deskripsi?: string;              // Keterangan spesifikasi produk
+}
 ```
 
-## 9. Kebutuhan Non-Fungsional
-- Waktu muat halaman awal di bawah 2 detik pada koneksi normal.
-- Skor Lighthouse minimal 90 untuk performa dan aksesibilitas.
-- Kontras teks memenuhi standar WCAG AA.
-- Area sentuh minimal 44px pada handphone.
-- Semua teks antarmuka dalam **Bahasa Indonesia**.
-- Format uang `Rp 2.450.000` dan tanggal `18 Okt 2025` lewat helper terpusat.
-- Dukungan peramban modern: Chrome, Edge, Safari, Firefox (dua versi terakhir).
+### 6.2 Skema Transaksi (`Transaction`)
+```typescript
+export interface TransactionItem {
+  produkId: string;
+  produkNama: string;
+  harga: number;
+  qty: number;
+  subtotal: number;
+  icon?: string;
+}
 
-## 10. Kriteria Penerimaan
-- [ ] Dashboard sama dengan referensi dalam hal tata letak, warna, dan konten di laptop, tablet, dan handphone.
-- [ ] Seluruh 7 menu sidebar dapat dibuka dan menampilkan halaman berisi data dummy.
-- [ ] Kasir bisa menambah produk ke keranjang, mengubah jumlah, menghitung total, dan menampilkan modal bayar serta struk (dummy).
-- [ ] Pencarian dan filter pada halaman Produk, Stok, dan Pelanggan bekerja pada data dummy.
-- [ ] Tidak ada panggilan jaringan ke backend.
-- [ ] Tidak ada scroll horizontal pada lebar layar 360px.
-- [ ] Token warna dipusatkan di konfigurasi Tailwind, tidak ditulis ulang di komponen.
+export interface Transaction {
+  id: string;                      // Contoh: "TRX-0018"
+  noTransaksi: string;
+  tanggal: string;                 // YYYY-MM-DD
+  waktu: string;                   // HH:mm WIB
+  pelangganId: string;
+  pelangganNama: string;
+  items: TransactionItem[];
+  subtotal: number;
+  diskon: number;
+  pajak: number;
+  total: number;
+  metodeBayar: "Tunai" | "QRIS" | "Transfer" | "Kartu";
+  nominalBayar: number;
+  kembalian: number;
+  status: "Selesai" | "Ditahan" | "Dibatalkan";
+  kasir: string;
+  catatan?: string;
+}
+```
 
-## 11. Rencana Pengerjaan
+### 6.3 Skema Pelanggan & Anabul (`Customer` & `Pet`)
+```typescript
+export interface Pet {
+  id: string;
+  nama: string;
+  jenis: "Kucing" | "Anjing" | "Kelinci" | "Lainnya";
+  ras: string;
+  umur: string;
+  beratKg: number;
+  jadwalVaksinBerikutnya?: string;
+}
 
-| Tahap | Pekerjaan |
-|---|---|
-| 1 | Setup proyek, token desain, dan komponen UI dasar |
-| 2 | Layout: sidebar, topbar, bottom navigation, responsif |
-| 3 | Halaman Dashboard sesuai referensi |
-| 4 | Halaman Transaksi (POS) dan modal pembayaran |
-| 5 | Halaman Produk dan Stok |
-| 6 | Halaman Pelanggan, Laporan, Pengaturan |
-| 7 | Poles responsif, aksesibilitas, dan pengujian di tiga ukuran layar |
+export interface Customer {
+  id: string;                      // Contoh: "CUST-001"
+  nama: string;
+  telepon: string;
+  alamat?: string;
+  totalBelanja: number;
+  poin: number;
+  tier: "Bronze" | "Silver" | "Gold" | "Platinum";
+  pets: Pet[];
+  kunjunganTerakhir: string;
+}
+```
 
-## 12. Tahap Selanjutnya (di Luar Lingkup)
-- Sambungkan Supabase: auth, tabel produk, transaksi, pelanggan, dan stok.
-- Ganti file dummy dengan query nyata, komponen UI tetap dipakai ulang.
-- Tambahkan fitur layanan jasa (grooming, penitipan), booking, dan loyalitas.
-- Integrasi printer struk dan scanner barcode.
+---
 
-## 13. Risiko dan Catatan
-- Warna hex di dokumen ini perkiraan dari gambar, perlu dicek ulang di desain asli bila tersedia.
-- Data dummy memakai tahun 2025 sesuai gambar; bisa disesuaikan ke tahun berjalan.
-- Pada referensi terdapat label tanggal ganda di grafik; diselesaikan dengan data 7 hari berurutan.
+## 7. Rencana Pengembangan Selanjutnya (Future Roadmap)
+
+Meskipun saat ini antarmuka, alur relasi, dan persistensi lokal telah berfungsi penuh di sisi peramban, tahapan pengembangan berikutnya direncanakan mencakup:
+
+1. **Integrasi Backend Database (Supabase / PostgreSQL):**
+   * Migrasi skema TypeScript ke tabel relasional database dengan *Row Level Security (RLS)*.
+   * Sinkronisasi data multi-kasir secara *real-time* via WebSocket Supabase.
+2. **Cloud Media Storage (Supabase Storage / Cloudinary):**
+   * Mengunggah file foto produk langsung ke bucket cloud CDN dengan kompresi otomatis untuk efisiensi penyimpanan.
+3. **Hardware Bridge Kasir:**
+   * Koneksi langsung ke printer thermal Bluetooth/ESC-POS dan laci uang (*Cash Drawer Trigger*).
+   * Integrasi pemindai barcode fisik USB/Bluetooth via *HID keyboard emulation listener*.
+4. **Notifikasi WhatsApp Otomatis:**
+   * Pengiriman otomatis struk digital PDF dan pengingat jadwal vaksin/grooming ke nomor WhatsApp pelanggan.
+
+---
+
+## 8. Panduan Menjalankan Proyek (Local Setup)
+
+1. **Clone Repository:**
+   ```bash
+   git clone https://github.com/Faliqulxx/PawMart.git
+   cd PawMart
+   ```
+2. **Instalasi Dependensi:**
+   ```bash
+   npm install
+   ```
+3. **Jalankan Server Development:**
+   ```bash
+   npm run dev
+   ```
+4. **Buka di Browser:**
+   Akses `http://localhost:3000` untuk membuka aplikasi PawMart POS.

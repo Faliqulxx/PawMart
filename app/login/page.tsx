@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { User, Lock, Eye, EyeOff, Sparkles, HelpCircle, X, Check } from "lucide-react";
+import { User, Lock, Eye, EyeOff, Sparkles, HelpCircle, X, Check, Crown, Calculator, Scissors } from "lucide-react";
 import { useUserRole } from "@/context/UserContext";
 import { useToast } from "@/components/ui/Toast";
 import { SYSTEM_USERS, getUserByEmailOrUsername } from "@/data/users";
@@ -286,8 +286,8 @@ export default function LoginPage() {
                   className="p-2 rounded-xl border border-[#ECE8E1] hover:border-[#F87D19] hover:bg-orange-50/60 transition-all text-left group cursor-pointer"
                   title="Masuk sebagai Akun Owner (Budi Hartono)"
                 >
-                  <div className="flex items-center gap-1 font-bold text-xs text-[#1F2937] group-hover:text-[#F87D19]">
-                    <span>👑</span>
+                  <div className="flex items-center gap-1.5 font-bold text-xs text-[#1F2937] group-hover:text-[#F87D19]">
+                    <Crown size={14} className="text-amber-500 shrink-0" />
                     <span className="truncate">Owner</span>
                   </div>
                   <p className="text-[9px] text-[#6B7280] mt-0.5 truncate">
@@ -302,8 +302,8 @@ export default function LoginPage() {
                   className="p-2 rounded-xl border border-[#ECE8E1] hover:border-[#F87D19] hover:bg-orange-50/60 transition-all text-left group cursor-pointer"
                   title="Masuk sebagai Akun Kasir (Maya Kasir)"
                 >
-                  <div className="flex items-center gap-1 font-bold text-xs text-[#1F2937] group-hover:text-[#F87D19]">
-                    <span>👤</span>
+                  <div className="flex items-center gap-1.5 font-bold text-xs text-[#1F2937] group-hover:text-[#F87D19]">
+                    <Calculator size={14} className="text-blue-500 shrink-0" />
                     <span className="truncate">Kasir</span>
                   </div>
                   <p className="text-[9px] text-[#6B7280] mt-0.5 truncate">
@@ -318,8 +318,8 @@ export default function LoginPage() {
                   className="p-2 rounded-xl border border-[#ECE8E1] hover:border-[#F87D19] hover:bg-orange-50/60 transition-all text-left group cursor-pointer"
                   title="Masuk sebagai Akun Groomer (Rifki Groomer)"
                 >
-                  <div className="flex items-center gap-1 font-bold text-xs text-[#1F2937] group-hover:text-[#F87D19]">
-                    <span>✂️</span>
+                  <div className="flex items-center gap-1.5 font-bold text-xs text-[#1F2937] group-hover:text-[#F87D19]">
+                    <Scissors size={14} className="text-emerald-500 shrink-0" />
                     <span className="truncate">Groomer</span>
                   </div>
                   <p className="text-[9px] text-[#6B7280] mt-0.5 truncate">
@@ -361,7 +361,7 @@ export default function LoginPage() {
             <div className="space-y-2.5 mt-4">
               <div className="p-3 bg-[#FAF8F5] rounded-xl border border-[#ECE8E1]">
                 <p className="text-xs font-bold text-[#1F2937] flex items-center gap-1.5">
-                  <span>👑</span> Akun Owner:
+                  <Crown size={14} className="text-amber-500" /> Akun Owner:
                 </p>
                 <p className="text-[11px] text-[#6B7280] font-mono mt-0.5">
                   Budi Hartono | owner@pawmart.id
@@ -370,7 +370,7 @@ export default function LoginPage() {
 
               <div className="p-3 bg-[#FAF8F5] rounded-xl border border-[#ECE8E1]">
                 <p className="text-xs font-bold text-[#1F2937] flex items-center gap-1.5">
-                  <span>👤</span> Akun Kasir:
+                  <Calculator size={14} className="text-blue-500" /> Akun Kasir:
                 </p>
                 <p className="text-[11px] text-[#6B7280] font-mono mt-0.5">
                   Maya Kasir | kasir@pawmart.id
@@ -379,7 +379,7 @@ export default function LoginPage() {
 
               <div className="p-3 bg-[#FAF8F5] rounded-xl border border-[#ECE8E1]">
                 <p className="text-xs font-bold text-[#1F2937] flex items-center gap-1.5">
-                  <span>✂️</span> Akun Groomer:
+                  <Scissors size={14} className="text-emerald-500" /> Akun Groomer:
                 </p>
                 <p className="text-[11px] text-[#6B7280] font-mono mt-0.5">
                   Rifki Groomer | groomer@pawmart.id

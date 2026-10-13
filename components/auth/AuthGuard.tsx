@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useUserRole, RoleType } from "@/context/UserContext";
 import { PawPrint, ShieldAlert, ArrowLeft, LogOut, Lock } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { RoleIcon } from "@/components/ui/RoleIcon";
 
 // Route whitelist permission mapping per role
 export const ROLE_ROUTE_PERMISSIONS: Record<RoleType, string[]> = {
@@ -143,8 +144,9 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
             </div>
             <div className="flex items-center justify-between text-[#6B7280]">
               <span>Peran Anda:</span>
-              <span className="font-bold text-[#C9772E] flex items-center gap-1">
-                <span>{currentUser.avatar}</span> {currentUser.roleLabel}
+              <span className="font-bold text-[#C9772E] flex items-center gap-1.5">
+                <RoleIcon role={currentUser.role} size={14} />
+                <span>{currentUser.roleLabel}</span>
               </span>
             </div>
             <div className="flex items-center justify-between text-[#6B7280]">

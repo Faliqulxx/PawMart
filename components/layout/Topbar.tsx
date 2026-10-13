@@ -24,6 +24,7 @@ import { useUserRole } from "@/context/UserContext";
 import { useCashierShift } from "@/context/ShiftContext";
 import { useToast } from "@/components/ui/Toast";
 import { formatRupiah } from "@/lib/format";
+import { RoleIcon } from "@/components/ui/RoleIcon";
 
 export function Topbar() {
   const router = useRouter();
@@ -152,7 +153,7 @@ export function Topbar() {
             className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold cursor-default select-none shadow-xs ${roleBadgeStyle}`}
             title={`Akun terotentikasi sebagai ${currentUser.roleLabel}`}
           >
-            <span className="text-sm">{currentUser.avatar}</span>
+            <RoleIcon role={role} size={15} />
             <span>
               {role === "admin"
                 ? "Owner"
@@ -237,7 +238,7 @@ export function Topbar() {
               className="flex items-center gap-2 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl hover:bg-[#F7F5F1] transition-colors focus:outline-none"
             >
               <div className="w-8 h-8 rounded-full bg-[#C9772E]/15 text-[#C9772E] font-bold text-xs flex items-center justify-center border border-[#C9772E]/30">
-                {currentUser.avatar}
+                <RoleIcon role={role} size={15} />
               </div>
               <div className="text-left hidden md:block">
                 <span className="text-xs font-semibold text-[#1F2937] block leading-tight">

@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserRole, RoleType } from "@/context/UserContext";
+import { RoleIcon } from "@/components/ui/RoleIcon";
 
 export interface NavItemConfig {
   name: string;
@@ -205,8 +206,8 @@ export function Sidebar() {
       <div className="p-3 border-t border-[#ECE8E1] bg-[#FAF8F5]">
         <div className="p-2.5 rounded-xl bg-white border border-[#ECE8E1] flex items-center justify-between shadow-xs">
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-[#FBEBDD] flex items-center justify-center text-sm shrink-0">
-              {currentUser.avatar}
+            <div className="w-8 h-8 rounded-lg bg-[#FBEBDD] text-[#C9772E] flex items-center justify-center shrink-0">
+              <RoleIcon role={currentUser.role} size={16} />
             </div>
             <div className="min-w-0">
               <p className="text-xs font-semibold text-[#1F2937] leading-none truncate">

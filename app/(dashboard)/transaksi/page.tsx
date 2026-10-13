@@ -29,6 +29,8 @@ import {
   Gift,
   Coins,
   Lock,
+  Crown,
+  Calculator,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -483,12 +485,12 @@ export default function TransaksiPage() {
               Kasir & Transaksi POS
             </h1>
             {isAdmin ? (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#DCFCE7] text-[#16A34A] border border-emerald-200">
-                <ShieldCheck size={13} /> Mode Owner/Admin
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#DCFCE7] text-[#16A34A] border border-emerald-200">
+                <Crown size={13} className="text-emerald-700" /> Mode Owner/Admin
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#FBEBDD] text-[#C9772E] border border-[#F5DFC9]">
-                <span>👩‍💼</span> Mode Kasir/Karyawan
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#FBEBDD] text-[#C9772E] border border-[#F5DFC9]">
+                <Calculator size={13} className="text-[#C9772E]" /> Mode Kasir/Karyawan
               </span>
             )}
           </div>

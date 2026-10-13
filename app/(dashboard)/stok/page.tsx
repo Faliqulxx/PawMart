@@ -15,6 +15,7 @@ import {
   Calendar,
   AlertCircle,
   CheckCircle2,
+  Calculator,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -165,7 +166,7 @@ export default function StokPage() {
             </Button>
           ) : (
             <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 text-blue-800 text-xs px-3 py-2 rounded-xl font-semibold">
-              <span>👩‍💼</span>
+              <Calculator size={15} className="text-blue-600" />
               <span>Mode Kasir: Monitoring Stok Saja</span>
             </div>
           )}

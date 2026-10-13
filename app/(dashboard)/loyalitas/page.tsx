@@ -16,6 +16,7 @@ import {
   ArrowUpRight,
   Star,
   Gift,
+  Crown,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -90,7 +91,7 @@ export default function LoyalitasPage() {
             <div className="text-xs text-emerald-600 font-medium mt-1">↑ 18% dari bulan lalu</div>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-xl">
-            👑
+            <Crown size={22} className="text-amber-500" />
           </div>
         </div>
 
@@ -103,7 +104,7 @@ export default function LoyalitasPage() {
             <div className="text-xs text-[#6B7280] mt-1">Estimasi nilai: {formatRupiah(1350000)}</div>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-[#C9772E]/10 text-[#C9772E] flex items-center justify-center font-bold text-xl">
-            ⭐
+            <Star size={22} className="text-[#C9772E]" />
           </div>
         </div>
 

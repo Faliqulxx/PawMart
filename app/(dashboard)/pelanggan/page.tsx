@@ -422,9 +422,9 @@ export default function PelangganPage() {
             <div className="flex items-center gap-1 p-1 bg-[#ECE8E1]/60 rounded-xl overflow-x-auto">
               {[
                 { id: "anabul", label: `🐾 Anabul (${selectedCustomer.pets.length})` },
-                { id: "booking", label: "📅 Jadwal Booking" },
-                { id: "layanan", label: "✂️ Riwayat Layanan" },
-                { id: "loyalitas", label: "👑 Loyalitas & Voucher" },
+                { id: "booking", label: "Jadwal Booking" },
+                { id: "layanan", label: "Riwayat Layanan" },
+                { id: "loyalitas", label: "Loyalitas & Voucher" },
               ].map((tab) => (
                 <button
                   key={tab.id}

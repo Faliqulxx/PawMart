@@ -44,6 +44,9 @@ import {
   UserCheck,
   Clock,
   TrendingDown,
+  Scissors,
+  Stethoscope,
+  Calculator,
 } from "lucide-react";
 import { ProductImage } from "@/components/ui/ProductImage";
 import { useCashierShift } from "@/context/ShiftContext";
@@ -262,12 +265,12 @@ export default function LaporanPage() {
       {/* Report Sub-Tabs (PRD 6.4) */}
       <div className="flex items-center gap-1.5 p-1 bg-[#ECE8E1]/60 rounded-2xl w-fit overflow-x-auto max-w-full">
         {[
-          { id: "ringkasan", label: "📊 Finansial & Produk" },
-          { id: "shift", label: "🪙 Riwayat Shift Kasir" },
-          { id: "layanan", label: "✂️ Pendapatan Layanan" },
-          { id: "penitipan", label: "🏨 Okupansi Penitipan" },
-          { id: "staf", label: "👥 Performa Staf" },
-          { id: "voucher", label: "🏷️ Penggunaan Voucher" },
+          { id: "ringkasan", label: "Finansial & Produk" },
+          { id: "shift", label: "Riwayat Shift Kasir" },
+          { id: "layanan", label: "Pendapatan Layanan" },
+          { id: "penitipan", label: "Okupansi Penitipan" },
+          { id: "staf", label: "Performa Staf" },
+          { id: "voucher", label: "Penggunaan Voucher" },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -610,23 +613,28 @@ export default function LaporanPage() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {[
-              { nama: "Dewi Lestari", peran: "Groomer", selesai: 342, rating: 4.9, icon: "✂️" },
-              { nama: "Bagas Setiawan", peran: "Groomer", selesai: 289, rating: 4.8, icon: "🛁" },
-              { nama: "drh. Maya Putri", peran: "Dokter Hewan", selesai: 175, rating: 5.0, icon: "🩺" },
-              { nama: "Rudi Hartono", peran: "Kasir POS", selesai: 512, rating: 4.9, icon: "👩‍💼" },
-            ].map((staf, idx) => (
-              <Card key={idx} className="p-4 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl">{staf.icon}</span>
-                  <span className="text-xs font-bold text-amber-600">★ {staf.rating}</span>
-                </div>
-                <h4 className="font-bold text-sm text-[#1F2937]">{staf.nama}</h4>
-                <p className="text-xs text-[#6B7280]">{staf.peran}</p>
-                <div className="pt-2 border-t border-[#ECE8E1] text-xs font-semibold text-[#C9772E]">
-                  {staf.selesai} Transaksi / Layanan
-                </div>
-              </Card>
-            ))}
+              { nama: "Dewi Lestari", peran: "Groomer", selesai: 342, rating: 4.9, icon: Scissors, color: "text-emerald-600 bg-emerald-50" },
+              { nama: "Bagas Setiawan", peran: "Groomer", selesai: 289, rating: 4.8, icon: Sparkles, color: "text-blue-600 bg-blue-50" },
+              { nama: "drh. Maya Putri", peran: "Dokter Hewan", selesai: 175, rating: 5.0, icon: Stethoscope, color: "text-rose-600 bg-rose-50" },
+              { nama: "Rudi Hartono", peran: "Kasir POS", selesai: 512, rating: 4.9, icon: Calculator, color: "text-amber-600 bg-amber-50" },
+            ].map((staf, idx) => {
+              const Icon = staf.icon;
+              return (
+                <Card key={idx} className="p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${staf.color}`}>
+                      <Icon size={18} />
+                    </div>
+                    <span className="text-xs font-bold text-amber-600">★ {staf.rating}</span>
+                  </div>
+                  <h4 className="font-bold text-sm text-[#1F2937]">{staf.nama}</h4>
+                  <p className="text-xs text-[#6B7280]">{staf.peran}</p>
+                  <div className="pt-2 border-t border-[#ECE8E1] text-xs font-semibold text-[#C9772E]">
+                    {staf.selesai} Transaksi / Layanan
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         </div>
       )}

@@ -31,6 +31,7 @@ import { initialBookings } from "@/data/bookings";
 import { initialBoardingStays } from "@/data/boardingStays";
 import { useUserRole } from "@/context/UserContext";
 import { useCashierShift } from "@/context/ShiftContext";
+import { RoleIcon } from "@/components/ui/RoleIcon";
 
 export default function DashboardPage() {
   const { currentUser, role, isAdmin, isKasir, isGroomer } = useUserRole();
@@ -58,7 +59,12 @@ export default function DashboardPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl sm:text-3xl font-bold text-[#1F2937] tracking-tight flex items-center gap-2">
-              Halo, {currentUser.name.split(" ")[0]} <span>{currentUser.avatar}</span>
+              Halo, {currentUser.name.split(" ")[0]}
+              <RoleIcon
+                role={role}
+                size={24}
+                className={isAdmin ? "text-amber-500" : isKasir ? "text-blue-500" : "text-emerald-500"}
+              />
             </h1>
             <span
               className={`text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 select-none ${
@@ -121,7 +127,17 @@ export default function DashboardPage() {
         }`}
       >
         <div className="flex items-center gap-2.5">
-          <span className="text-lg">{currentUser.avatar}</span>
+          <div
+            className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+              isAdmin
+                ? "bg-amber-100 text-amber-700"
+                : isKasir
+                ? "bg-blue-100 text-blue-700"
+                : "bg-emerald-100 text-emerald-700"
+            }`}
+          >
+            <RoleIcon role={role} size={18} />
+          </div>
           <div>
             <span className="font-bold">
               Mode Peran: {currentUser.roleLabel}

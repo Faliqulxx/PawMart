@@ -4,6 +4,9 @@ import { Topbar } from "@/components/layout/Topbar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 
+// Opt dashboard segment out of instant-navigation validation because it relies on client auth state
+export const instant = false;
+
 export default function DashboardLayout({
   children,
 }: {

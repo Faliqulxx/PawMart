@@ -23,8 +23,6 @@ import {
 import { useUserRole } from "@/context/UserContext";
 import { useCashierShift } from "@/context/ShiftContext";
 import { useToast } from "@/components/ui/Toast";
-import { OpenShiftModal } from "@/components/pos/OpenShiftModal";
-import { CloseShiftModal } from "@/components/pos/CloseShiftModal";
 import { formatRupiah } from "@/lib/format";
 
 export function Topbar() {
@@ -297,10 +295,6 @@ export function Topbar() {
           </div>
         </div>
       </div>
-
-      {/* Cashier Shift Modals */}
-      <OpenShiftModal />
-      <CloseShiftModal />
     </header>
   );
 }

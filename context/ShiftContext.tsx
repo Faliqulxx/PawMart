@@ -23,10 +23,15 @@ const ShiftContext = createContext<ShiftContextValue | undefined>(undefined);
 export function ShiftProvider({ children }: { children: React.ReactNode }) {
   const { currentUser, isKasir } = useUserRole();
 
+  const SHIFT_STORAGE_KEY = "pawmart_shift_history_v2";
+
   const [shiftHistory, setShiftHistory] = useState<CashierShift[]>(() => {
     if (typeof window !== "undefined") {
       try {
-        const saved = localStorage.getItem("pawmart_shift_history");
+        // Clean up legacy v1 storage if present
+        localStorage.removeItem("pawmart_shift_history");
+
+        const saved = localStorage.getItem(SHIFT_STORAGE_KEY);
         if (saved) return JSON.parse(saved);
       } catch (e) {
         console.error("Failed to load shift history:", e);
@@ -52,13 +57,18 @@ export function ShiftProvider({ children }: { children: React.ReactNode }) {
     );
 
     setCurrentShift(activeShift || null);
+
+    // If logged in as cashier and no active shift exists, prompt Open Shift Modal automatically
+    if (currentUser.role === "kasir" && !activeShift) {
+      setIsOpenShiftModalOpen(true);
+    }
   }, [currentUser, shiftHistory]);
 
   // Persist shift history to localStorage
   const saveShiftHistory = (newHistory: CashierShift[]) => {
     setShiftHistory(newHistory);
     try {
-      localStorage.setItem("pawmart_shift_history", JSON.stringify(newHistory));
+      localStorage.setItem(SHIFT_STORAGE_KEY, JSON.stringify(newHistory));
     } catch (e) {
       console.error("Failed to persist shift history:", e);
     }

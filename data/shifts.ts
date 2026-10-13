@@ -65,16 +65,16 @@ export const initialShiftHistory: CashierShift[] = [
     cashierId: "USR-002",
     cashierName: "Maya Kasir",
     startTime: "2026-10-11T08:00:00",
-    endTime: null, // Shift aktif saat ini
-    status: "open",
+    endTime: "2026-10-11T15:00:00",
+    status: "closed",
     startingCash: 500000,
     cashSales: 980000,
     nonCashSales: 870000,
     totalSales: 1850000,
     transactionCount: 14,
     expectedCash: 1480000, // 500.000 + 980.000
-    actualCash: null,
-    cashDifference: null,
-    notes: "Shift pagi akhir pekan, modal awal uang receh siap di laci kasir.",
+    actualCash: 1480000,
+    cashDifference: 0,
+    notes: "Shift pagi selesai, seluruh uang kas laci seimbang pas.",
   },
 ];

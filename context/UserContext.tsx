@@ -1,20 +1,19 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import {
+  SystemUser,
+  RoleType,
+  SYSTEM_USERS,
+  getUserById,
+  getUserByRole,
+} from "@/data/users";
 
-export type RoleType = "admin" | "kasir" | "groomer";
-
-export interface CurrentUser {
-  id: string;
-  name: string;
-  role: RoleType;
-  roleLabel: string;
-  email: string;
-  avatar: string;
-}
+export type { RoleType, SystemUser };
+export type CurrentUser = SystemUser;
 
 export interface UserContextValue {
-  currentUser: CurrentUser;
+  currentUser: SystemUser;
   role: RoleType;
   isAdmin: boolean;
   isKasir: boolean;
@@ -27,44 +26,19 @@ export interface UserContextValue {
   canCashierPOS: boolean;
   isAuthenticated: boolean;
   isInitialized: boolean;
-  switchRole: (role: RoleType) => void;
-  login: (
-    role?: RoleType,
-    customDetails?: { name?: string; email?: string },
-    rememberMe?: boolean
-  ) => void;
+  login: (userId: string, rememberMe?: boolean) => void;
   logout: () => void;
 }
 
-const ADMIN_USER: CurrentUser = {
-  id: "USER-001",
-  name: "Budi Hartono (Owner)",
-  role: "admin",
-  roleLabel: "Admin / Owner Toko",
-  email: "owner@pawmart.id",
-  avatar: "👑",
-};
+interface StoredAuthSession {
+  userId: string;
+  timestamp: number;
+}
 
-const KASIR_USER: CurrentUser = {
-  id: "USER-002",
-  name: "Maya Kasir (Karyawan)",
-  role: "kasir",
-  roleLabel: "Kasir / Karyawan",
-  email: "kasir@pawmart.id",
-  avatar: "👩‍💼",
-};
-
-const GROOMER_USER: CurrentUser = {
-  id: "USER-003",
-  name: "Rifki Groomer (Staff)",
-  role: "groomer",
-  roleLabel: "Staff Grooming & Care",
-  email: "groomer@pawmart.id",
-  avatar: "✂️",
-};
+const DEFAULT_USER: SystemUser = SYSTEM_USERS[0]; // Budi Hartono (Owner)
 
 const UserContext = createContext<UserContextValue>({
-  currentUser: ADMIN_USER,
+  currentUser: DEFAULT_USER,
   role: "admin",
   isAdmin: true,
   isKasir: false,
@@ -77,49 +51,47 @@ const UserContext = createContext<UserContextValue>({
   canCashierPOS: true,
   isAuthenticated: false,
   isInitialized: false,
-  switchRole: () => {},
   login: () => {},
   logout: () => {},
 });
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
-  const [role, setRole] = useState<RoleType>("admin");
+  const [currentUser, setCurrentUser] = useState<SystemUser>(DEFAULT_USER);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
-  const [customUser, setCustomUser] = useState<{ name?: string; email?: string } | null>(null);
 
-  // Initialize from sessionStorage (or localStorage if remembered) on client mount
+  // Initialize authenticated user from verified session on client mount
   useEffect(() => {
     try {
-      const sessionData = sessionStorage.getItem("pawmart_auth_session");
-      if (sessionData) {
-        const parsed = JSON.parse(sessionData);
-        if (parsed?.isAuthenticated) {
-          setIsAuthenticated(true);
-          if (parsed.role === "admin" || parsed.role === "kasir" || parsed.role === "groomer") {
-            setRole(parsed.role);
+      // 1. Check active session storage
+      const sessionRaw = sessionStorage.getItem("pawmart_auth_session");
+      if (sessionRaw) {
+        const parsed: StoredAuthSession = JSON.parse(sessionRaw);
+        if (parsed?.userId) {
+          const user = getUserById(parsed.userId);
+          if (user) {
+            setCurrentUser(user);
+            setIsAuthenticated(true);
+            setIsInitialized(true);
+            return;
           }
-          if (parsed.customName || parsed.customEmail) {
-            setCustomUser({ name: parsed.customName, email: parsed.customEmail });
-          }
-          setIsInitialized(true);
-          return;
         }
       }
 
-      const rememberedData = localStorage.getItem("pawmart_remembered_session");
-      if (rememberedData) {
-        const parsed = JSON.parse(rememberedData);
-        if (parsed?.isAuthenticated) {
-          setIsAuthenticated(true);
-          if (parsed.role === "admin" || parsed.role === "kasir" || parsed.role === "groomer") {
-            setRole(parsed.role);
+      // 2. Check remembered persistent session storage
+      const rememberedRaw = localStorage.getItem("pawmart_remembered_session");
+      if (rememberedRaw) {
+        const parsed: StoredAuthSession = JSON.parse(rememberedRaw);
+        if (parsed?.userId) {
+          const user = getUserById(parsed.userId);
+          if (user) {
+            setCurrentUser(user);
+            setIsAuthenticated(true);
+            // Refresh current window session
+            sessionStorage.setItem("pawmart_auth_session", JSON.stringify(parsed));
+            setIsInitialized(true);
+            return;
           }
-          if (parsed.customName || parsed.customEmail) {
-            setCustomUser({ name: parsed.customName, email: parsed.customEmail });
-          }
-          setIsInitialized(true);
-          return;
         }
       }
 
@@ -133,24 +105,18 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const login = (
-    targetRole: RoleType = "admin",
-    customDetails?: { name?: string; email?: string },
-    rememberMe: boolean = false
-  ) => {
-    setRole(targetRole);
-    if (customDetails?.name || customDetails?.email) {
-      setCustomUser(customDetails);
-    } else {
-      setCustomUser(null);
-    }
+  /**
+   * Login strictly by authenticating a specific User ID.
+   * Role is automatically derived from the database record of that user.
+   * Client-side cannot arbitrarily inject or switch roles.
+   */
+  const login = (userId: string, rememberMe: boolean = false) => {
+    const user = getUserById(userId) || DEFAULT_USER;
+    setCurrentUser(user);
     setIsAuthenticated(true);
 
-    const payload = {
-      isAuthenticated: true,
-      role: targetRole,
-      customName: customDetails?.name,
-      customEmail: customDetails?.email,
+    const payload: StoredAuthSession = {
+      userId: user.id,
       timestamp: Date.now(),
     };
 
@@ -166,9 +132,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  /**
+   * Terminate active authenticated session
+   */
   const logout = () => {
     setIsAuthenticated(false);
-    setCustomUser(null);
+    setCurrentUser(DEFAULT_USER);
     try {
       sessionStorage.removeItem("pawmart_auth_session");
       localStorage.removeItem("pawmart_remembered_session");
@@ -177,34 +146,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const switchRole = (newRole: RoleType) => {
-    setRole(newRole);
-    try {
-      const raw = sessionStorage.getItem("pawmart_auth_session");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        parsed.role = newRole;
-        sessionStorage.setItem("pawmart_auth_session", JSON.stringify(parsed));
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const baseUser =
-    role === "admin"
-      ? ADMIN_USER
-      : role === "groomer"
-      ? GROOMER_USER
-      : KASIR_USER;
-
-  const currentUser: CurrentUser = {
-    ...baseUser,
-    name: customUser?.name || baseUser.name,
-    email: customUser?.email || baseUser.email,
-  };
-
-  // Granular role permissions
+  // Role permissions are derived directly from the authenticated user
+  const role: RoleType = currentUser.role;
   const isAdmin = role === "admin";
   const isKasir = role === "kasir";
   const isGroomer = role === "groomer";
@@ -232,7 +175,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         canCashierPOS,
         isAuthenticated,
         isInitialized,
-        switchRole,
         login,
         logout,
       }}

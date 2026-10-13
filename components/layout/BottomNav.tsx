@@ -17,17 +17,16 @@ import {
   Settings,
   X,
   ChevronRight,
-  Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useUserRole } from "@/context/UserContext";
+import { useUserRole, RoleType } from "@/context/UserContext";
 
 export function BottomNav() {
   const pathname = usePathname();
-  const { role, isAdmin } = useUserRole();
+  const { role, currentUser } = useUserRole();
   const [showMoreModal, setShowMoreModal] = useState(false);
 
-  // Dynamic primary tabs based on role
+  // Dynamic primary tabs based strictly on role
   const primaryTabs =
     role === "groomer"
       ? [
@@ -71,7 +70,16 @@ export function BottomNav() {
           },
         ];
 
-  const allMoreItems = [
+  // Secondary items for the "Lainnya" sheet - filtered strictly by role
+  const allPotentialItems: {
+    name: string;
+    href: string;
+    icon: React.ComponentType<{ size?: number }>;
+    description: string;
+    badge: string | null;
+    badgeDanger?: boolean;
+    allowed: RoleType[];
+  }[] = [
     {
       name: "Booking & Jadwal",
       href: "/booking",
@@ -118,8 +126,7 @@ export function BottomNav() {
       href: "/laporan",
       icon: BarChart3,
       description: "Grafik omzet, margin & produk terlaris",
-      badge: isAdmin ? null : "Owner Only",
-      isOwnerOnly: true,
+      badge: null,
       allowed: ["admin"],
     },
     {
@@ -127,11 +134,15 @@ export function BottomNav() {
       href: "/pengaturan",
       icon: Settings,
       description: "Profil toko, struk, staf & pajak",
-      badge: isAdmin ? null : "Owner Only",
-      isOwnerOnly: true,
+      badge: null,
       allowed: ["admin"],
     },
   ];
+
+  // Strictly filter items: do not render disallowed items
+  const accessibleMoreItems = allPotentialItems.filter((item) =>
+    item.allowed.includes(role)
+  );
 
   const isMoreActive =
     pathname.startsWith("/booking") ||
@@ -210,9 +221,9 @@ export function BottomNav() {
             <div className="w-12 h-1 bg-[#ECE8E1] rounded-full mx-auto mb-4" />
             <div className="flex items-center justify-between pb-3 border-b border-[#ECE8E1]">
               <div>
-                <h3 className="font-bold text-base text-[#1F2937]">Menu Modul Lengkap</h3>
+                <h3 className="font-bold text-base text-[#1F2937]">Menu Tambahan</h3>
                 <p className="text-xs text-[#6B7280]">
-                  Peran Aktif: <strong className="text-[#C9772E]">{role.toUpperCase()}</strong>
+                  Masuk sebagai: <strong className="text-[#C9772E]">{currentUser.roleLabel}</strong>
                 </p>
               </div>
               <button
@@ -224,10 +235,9 @@ export function BottomNav() {
             </div>
 
             <div className="mt-3 space-y-2">
-              {allMoreItems.map((item) => {
+              {accessibleMoreItems.map((item) => {
                 const Icon = item.icon;
                 const active = pathname.startsWith(item.href);
-                const isRestricted = !item.allowed.includes(role);
 
                 return (
                   <Link
@@ -236,9 +246,7 @@ export function BottomNav() {
                     onClick={() => setShowMoreModal(false)}
                     className={cn(
                       "flex items-center justify-between p-3 rounded-2xl border transition-all",
-                      isRestricted
-                        ? "opacity-60 bg-gray-50 border-gray-200"
-                        : active
+                      active
                         ? "bg-[#FBEBDD]/40 border-[#C9772E]/40 text-[#C9772E]"
                         : "border-[#ECE8E1] bg-[#FAF8F5] hover:bg-white text-[#1F2937]"
                     )}
@@ -247,9 +255,7 @@ export function BottomNav() {
                       <div
                         className={cn(
                           "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
-                          isRestricted
-                            ? "bg-gray-100 text-gray-400"
-                            : active
+                          active
                             ? "bg-[#C9772E] text-white"
                             : "bg-white text-[#C9772E] border border-[#ECE8E1]"
                         )}
@@ -258,26 +264,20 @@ export function BottomNav() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className={cn("text-sm font-semibold", isRestricted && "line-through text-gray-500")}>
+                          <span className="text-sm font-semibold">
                             {item.name}
                           </span>
-                          {isRestricted ? (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
-                              <Lock size={10} /> Owner Only
+                          {item.badge && (
+                            <span
+                              className={cn(
+                                "text-[10px] font-bold px-2 py-0.5 rounded-full",
+                                item.badgeDanger
+                                  ? "bg-[#FEE2E2] text-[#E5484D]"
+                                  : "bg-[#FBEBDD] text-[#C9772E]"
+                              )}
+                            >
+                              {item.badge}
                             </span>
-                          ) : (
-                            item.badge && (
-                              <span
-                                className={cn(
-                                  "text-[10px] font-bold px-2 py-0.5 rounded-full",
-                                  item.badgeDanger
-                                    ? "bg-[#FEE2E2] text-[#E5484D]"
-                                    : "bg-[#FBEBDD] text-[#C9772E]"
-                                )}
-                              >
-                                {item.badge}
-                              </span>
-                            )
                           )}
                         </div>
                         <p className="text-xs text-[#6B7280]">{item.description}</p>

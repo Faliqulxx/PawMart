@@ -15,14 +15,13 @@ import {
   AlertTriangle,
   Info,
   Shield,
-  UserCheck,
 } from "lucide-react";
 import { useUserRole } from "@/context/UserContext";
 import { useToast } from "@/components/ui/Toast";
 
 export function Topbar() {
   const router = useRouter();
-  const { currentUser, role, isAdmin, switchRole, logout } = useUserRole();
+  const { currentUser, role, isAdmin, logout } = useUserRole();
   const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [showNotifications, setShowNotifications] = useState(false);
@@ -61,6 +60,14 @@ export function Topbar() {
     router.push(`/produk?q=${encodeURIComponent(searchQuery.trim())}`);
   };
 
+  // Role visual configuration badge
+  const roleBadgeStyle =
+    role === "admin"
+      ? "bg-amber-50 text-amber-900 border-amber-200/90"
+      : role === "kasir"
+      ? "bg-blue-50 text-blue-900 border-blue-200/90"
+      : "bg-emerald-50 text-emerald-900 border-emerald-200/90";
+
   return (
     <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-[#ECE8E1] px-4 sm:px-6 py-3">
       <div className="flex items-center justify-between gap-3 sm:gap-6">
@@ -98,56 +105,19 @@ export function Topbar() {
 
         {/* Right Action Icons & User Profile */}
         <div className="flex items-center gap-2 sm:gap-3 ml-auto">
-          {/* Role Quick Switch Pill */}
-          <div className="flex items-center bg-[#F7F5F1] p-1 rounded-full border border-[#ECE8E1]">
-            <button
-              type="button"
-              onClick={() => {
-                switchRole("admin");
-                showToast("Beralih ke peran Owner (Akses Penuh)", "info");
-              }}
-              className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition-all flex items-center gap-1 ${
-                role === "admin"
-                  ? "bg-[#C9772E] text-white shadow-xs"
-                  : "text-[#6B7280] hover:text-[#1F2937]"
-              }`}
-              title="Ganti ke peran Admin/Owner (Akses penuh seluruh fitur & laporan)"
-            >
-              <span>👑</span>
-              <span className="hidden sm:inline">Owner</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                switchRole("kasir");
-                showToast("Beralih ke peran Kasir (Operasional Kasir)", "info");
-              }}
-              className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition-all flex items-center gap-1 ${
-                role === "kasir"
-                  ? "bg-[#C9772E] text-white shadow-xs"
-                  : "text-[#6B7280] hover:text-[#1F2937]"
-              }`}
-              title="Ganti ke peran Kasir/Karyawan (Fokus POS, Antrean, dan Cek Stok)"
-            >
-              <span>👩‍💼</span>
-              <span className="hidden sm:inline">Kasir</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                switchRole("groomer");
-                showToast("Beralih ke peran Groomer (Antrean Layanan)", "info");
-              }}
-              className={`text-[11px] font-bold px-2 py-1 rounded-full transition-all flex items-center gap-1 ${
-                role === "groomer"
-                  ? "bg-[#C9772E] text-white shadow-xs"
-                  : "text-[#6B7280] hover:text-[#1F2937]"
-              }`}
-              title="Ganti ke peran Groomer (Fokus Papan Antrean & Booking Anabul)"
-            >
-              <span>✂️</span>
-              <span className="hidden sm:inline">Groomer</span>
-            </button>
+          {/* Informational Role Status Badge (Read-Only Status, Not a Switcher) */}
+          <div
+            className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold cursor-default select-none shadow-xs ${roleBadgeStyle}`}
+            title={`Akun terotentikasi sebagai ${currentUser.roleLabel}`}
+          >
+            <span className="text-sm">{currentUser.avatar}</span>
+            <span>
+              {role === "admin"
+                ? "Owner"
+                : role === "kasir"
+                ? "Kasir"
+                : "Groomer"}
+            </span>
           </div>
 
           {/* Notifications Dropdown */}
@@ -202,11 +172,11 @@ export function Topbar() {
                 </div>
                 <div className="p-2 border-t border-[#ECE8E1] text-center">
                   <Link
-                    href="/stok"
+                    href={role === "groomer" ? "/booking" : "/stok"}
                     onClick={() => setShowNotifications(false)}
                     className="text-xs text-[#C9772E] font-medium hover:underline"
                   >
-                    Periksa semua peringatan stok & jadwal
+                    Periksa semua peringatan & jadwal
                   </Link>
                 </div>
               </div>
@@ -240,93 +210,42 @@ export function Topbar() {
 
             {showUserDropdown && (
               <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-[#ECE8E1] py-1.5 z-50 animate-in fade-in zoom-in-95">
-                <div className="px-4 py-2 border-b border-[#ECE8E1]">
+                <div className="px-4 py-2.5 border-b border-[#ECE8E1]">
                   <p className="text-xs font-bold text-[#1F2937]">
                     {currentUser.name}
                   </p>
                   <p className="text-[11px] text-[#6B7280]">{currentUser.email}</p>
-                  <div className="mt-1.5 inline-flex items-center gap-1 text-[10px] bg-[#DCFCE7] text-[#16A34A] px-2 py-0.5 rounded-full font-medium">
-                    <ShieldCheck size={12} /> {currentUser.roleLabel}
-                  </div>
-                </div>
-
-                <div className="p-2 border-b border-[#ECE8E1] bg-[#FAF8F5]">
-                  <p className="text-[11px] font-semibold text-[#6B7280] mb-1.5">
-                    Ganti Peran Pengguna (Simulasi):
-                  </p>
-                  <div className="grid grid-cols-3 gap-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        switchRole("admin");
-                        setShowUserDropdown(false);
-                      }}
-                      className={`text-[11px] p-1.5 rounded-lg font-bold border text-center transition-all ${
-                        role === "admin"
-                          ? "bg-[#C9772E] text-white border-[#C9772E]"
-                          : "bg-white text-[#1F2937] border-[#ECE8E1] hover:bg-[#FBEBDD]"
-                      }`}
-                    >
-                      👑 Owner
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        switchRole("kasir");
-                        setShowUserDropdown(false);
-                      }}
-                      className={`text-[11px] p-1.5 rounded-lg font-bold border text-center transition-all ${
-                        role === "kasir"
-                          ? "bg-[#C9772E] text-white border-[#C9772E]"
-                          : "bg-white text-[#1F2937] border-[#ECE8E1] hover:bg-[#FBEBDD]"
-                      }`}
-                    >
-                      👩‍💼 Kasir
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        switchRole("groomer");
-                        setShowUserDropdown(false);
-                      }}
-                      className={`text-[11px] p-1.5 rounded-lg font-bold border text-center transition-all ${
-                        role === "groomer"
-                          ? "bg-[#C9772E] text-white border-[#C9772E]"
-                          : "bg-white text-[#1F2937] border-[#ECE8E1] hover:bg-[#FBEBDD]"
-                      }`}
-                    >
-                      ✂️ Groomer
-                    </button>
+                  <div className="mt-1.5 inline-flex items-center gap-1 text-[10px] bg-[#FAF8F5] border border-[#ECE8E1] text-[#1F2937] px-2 py-0.5 rounded-full font-semibold">
+                    <ShieldCheck size={12} className="text-[#16A34A]" /> {currentUser.roleLabel}
                   </div>
                 </div>
 
                 <div className="py-1">
-                  <Link
-                    href="/pengaturan"
-                    onClick={() => setShowUserDropdown(false)}
-                    className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#4B5563] hover:bg-[#F7F5F1] hover:text-[#1F2937]"
-                  >
-                    <User size={14} /> Pengaturan Akun
-                  </Link>
-                  <Link
-                    href="/pengaturan"
-                    onClick={() => setShowUserDropdown(false)}
-                    className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#4B5563] hover:bg-[#F7F5F1] hover:text-[#1F2937]"
-                  >
-                    <Shield size={14} /> Kelola Peran Kasir
-                  </Link>
+                  {isAdmin && (
+                    <Link
+                      href="/pengaturan"
+                      onClick={() => setShowUserDropdown(false)}
+                      className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#4B5563] hover:bg-[#F7F5F1] hover:text-[#1F2937]"
+                    >
+                      <User size={14} /> Pengaturan Akun & Toko
+                    </Link>
+                  )}
+                  <div className="px-4 py-1.5 text-[11px] text-[#9CA3AF]">
+                    Sesi aktif via autentikasi
+                  </div>
                 </div>
+
                 <div className="border-t border-[#ECE8E1] pt-1">
                   <button
                     onClick={() => {
                       setShowUserDropdown(false);
                       logout();
-                      showToast("Sesi kasir berhasil diakhiri. Silakan login kembali.", "info");
+                      showToast("Sesi berhasil diakhiri. Silakan login kembali.", "info");
                       router.push("/login");
                     }}
                     className="flex items-center gap-2.5 w-full px-4 py-2 text-xs text-[#E5484D] hover:bg-[#FEE2E2]/50 text-left font-medium transition-colors"
                   >
-                    <LogOut size={14} /> Keluar / Ganti Shift
+                    <LogOut size={14} /> Keluar / Ganti Akun
                   </button>
                 </div>
               </div>

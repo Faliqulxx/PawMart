@@ -2,7 +2,7 @@
 
 import React from "react";
 import { stats } from "@/data/stats";
-import { formatRupiah, formatTanggal } from "@/lib/format";
+import { formatRupiah } from "@/lib/format";
 import {
   DollarSign,
   ShoppingBag,
@@ -14,10 +14,8 @@ import {
   Clock,
   ArrowRight,
   CheckCircle2,
-  Lock,
-  Sparkles,
   Layers,
-  Store,
+  ShieldCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { StatCard } from "@/components/dashboard/StatCard";
@@ -54,7 +52,7 @@ export default function DashboardPage() {
               Halo, {currentUser.name.split(" ")[0]} <span>{currentUser.avatar}</span>
             </h1>
             <span
-              className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+              className={`text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 select-none ${
                 isAdmin
                   ? "bg-amber-100 text-amber-800 border border-amber-300"
                   : isKasir
@@ -62,6 +60,7 @@ export default function DashboardPage() {
                   : "bg-emerald-100 text-emerald-800 border border-emerald-300"
               }`}
             >
+              <ShieldCheck size={13} />
               {currentUser.roleLabel}
             </span>
           </div>
@@ -69,9 +68,9 @@ export default function DashboardPage() {
             {isAdmin &&
               "Semua sistem operasional toko, data omzet penjualan & perawatan anabul berjalan normal."}
             {isKasir &&
-              "Shift Kasir Aktif • Siap melayani pembayaran POS, antrean kasir, dan booking anabul."}
+              "Shift Kasir Aktif • Siap melayani pembayaran POS, tagih antrean anabul, dan input pesanan."}
             {isGroomer &&
-              "Stasiun Grooming Aktif • Pantau anabul dalam proses perawatan dan kalender reservasi."}
+              "Stasiun Perawatan Aktif • Pantau anabul dalam proses pengerjaan, hotel, dan kalender reservasi."}
           </p>
         </div>
 
@@ -102,9 +101,9 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Role Banner Indicator */}
+      {/* Role Banner Indicator (Informational Status Only, Non-Clickable) */}
       <div
-        className={`p-3.5 rounded-2xl border flex items-center justify-between text-xs transition-all ${
+        className={`p-3.5 rounded-2xl border flex items-center justify-between text-xs transition-all select-none ${
           isAdmin
             ? "bg-amber-50/70 border-amber-200/80 text-amber-900"
             : isKasir
@@ -128,12 +127,9 @@ export default function DashboardPage() {
             </p>
           </div>
         </div>
-        <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-semibold opacity-90">
-          <span>Ganti di Topbar</span>
-        </div>
       </div>
 
-      {/* Mobile Quick 3x2 Grid (PRD 6.1) */}
+      {/* Mobile Quick 3x2 Grid */}
       <MobileQuickGrid />
 
       {/* 4 Stat Cards: Dynamically Rendered Based on Role */}
@@ -141,7 +137,7 @@ export default function DashboardPage() {
         // OWNER / ADMIN VIEW: Financial & Store Performance
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
           <StatCard
-            title="Total Penjualan Hari Ini"
+            title="Total Penjualan"
             value={formatRupiah(stats.penjualanHariIni)}
             subtitle={`↑ ${stats.perubahan.penjualan}% dari kemarin`}
             isPositive={true}
@@ -186,7 +182,7 @@ export default function DashboardPage() {
           <StatCard
             title="Transaksi Shift Saya"
             value="14 Transaksi"
-            subtitle="Shift Aktif Berjalan"
+            subtitle="Shift Kasir Berjalan"
             isPositive={true}
             icon={ShoppingBag}
             iconBg="bg-[#FBEBDD]"
@@ -194,7 +190,7 @@ export default function DashboardPage() {
           />
 
           <StatCard
-            title="Antrean Siap Ditagih"
+            title="Antrian Siap Ditagih"
             value="2 Anabul"
             subtitle="Grooming Selesai"
             isPositive={true}
@@ -265,7 +261,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Booking Hari Ini & Hewan Dititipkan Row */}
+      {/* Booking Hari Ini, Hewan Dititipkan, & Antrian Grooming Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {/* Card 1: Booking Hari Ini */}
         <div className="bg-white p-5 rounded-2xl border border-[#ECE8E1] shadow-xs flex flex-col justify-between">
@@ -315,7 +311,7 @@ export default function DashboardPage() {
           </div>
 
           <Link
-            href="/layanan/penitipan"
+            href="/layanan"
             className="mt-4 pt-3 border-t border-[#ECE8E1] flex items-center justify-between text-xs font-semibold text-[#C9772E] hover:underline"
           >
             <span>Lihat Peta Kandang Hotel</span>
@@ -323,12 +319,12 @@ export default function DashboardPage() {
           </Link>
         </div>
 
-        {/* Card 3: Antrean Grooming Berjalan */}
+        {/* Card 3: Antrian Grooming */}
         <div className="bg-white p-5 rounded-2xl border border-[#ECE8E1] shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
-                Antrean Grooming
+                Antrian Grooming
               </span>
               <span className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm">
                 ✂️
@@ -343,7 +339,7 @@ export default function DashboardPage() {
           </div>
 
           <Link
-            href="/layanan/antrean"
+            href="/layanan"
             className="mt-4 pt-3 border-t border-[#ECE8E1] flex items-center justify-between text-xs font-semibold text-[#C9772E] hover:underline"
           >
             <span>Papan Antrean Layanan</span>
@@ -352,15 +348,15 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Main Content Grid: Conditioned by Role */}
+      {/* Main Content Grid: Strictly Role-Specific */}
       {isAdmin ? (
-        // OWNER: Full Sales Chart & Upcoming Bookings
+        // OWNER: Full Sales Chart, Next Scheduled Care, Top Products, Recent Transactions
         <>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
             <div className="lg:col-span-5 bg-white p-5 rounded-2xl border border-[#ECE8E1] shadow-xs space-y-4">
               <div className="flex items-center justify-between pb-2 border-b border-[#ECE8E1]">
                 <div>
-                  <h3 className="font-bold text-[#1F2937] text-base">Jadwal Perawatan Berikutnya</h3>
+                  <h3 className="font-bold text-[#1F2937] text-base">Perawatan Berikutnya</h3>
                   <p className="text-xs text-[#6B7280]">Reservasi terdekat yang akan dikerjakan staf.</p>
                 </div>
                 <Link
@@ -422,16 +418,16 @@ export default function DashboardPage() {
           </div>
         </>
       ) : isKasir ? (
-        // CASHIER: Operational Queue to Cashier + Recent Transactions
+        // CASHIER: Ready to Bill Queue + Recent Transactions
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
           <div className="lg:col-span-6 bg-white p-5 rounded-2xl border border-[#ECE8E1] shadow-xs space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-[#ECE8E1]">
               <div>
-                <h3 className="font-bold text-[#1F2937] text-base">Anabul Siap Ditagih ke Kasir</h3>
-                <p className="text-xs text-[#6B7280]">Layanan grooming yang telah selesai dan siap dibayar.</p>
+                <h3 className="font-bold text-[#1F2937] text-base">Anabul Siap Ditagih</h3>
+                <p className="text-xs text-[#6B7280]">Layanan grooming yang telah selesai dan siap dibayar di kasir.</p>
               </div>
               <Link
-                href="/layanan/antrean"
+                href="/layanan"
                 className="text-xs font-semibold text-[#C9772E] hover:underline"
               >
                 Papan Antrean
@@ -482,16 +478,16 @@ export default function DashboardPage() {
           </div>
         </div>
       ) : (
-        // GROOMER: Queue board preview & Schedule
+        // GROOMER: Care Schedule + Operational Guide (No financial stats)
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
           <div className="lg:col-span-7 bg-white p-5 rounded-2xl border border-[#ECE8E1] shadow-xs space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-[#ECE8E1]">
               <div>
-                <h3 className="font-bold text-[#1F2937] text-base">Jadwal Perawatan Saya Hari Ini</h3>
+                <h3 className="font-bold text-[#1F2937] text-base">Jadwal Perawatan Saya</h3>
                 <p className="text-xs text-[#6B7280]">Daftar antrean anabul yang ditangani oleh {currentUser.name}.</p>
               </div>
               <Link
-                href="/layanan/antrean"
+                href="/layanan"
                 className="text-xs font-semibold text-[#C9772E] hover:underline"
               >
                 Papan Antrean Lengkap
@@ -537,23 +533,23 @@ export default function DashboardPage() {
           <div className="lg:col-span-5 bg-white p-5 rounded-2xl border border-[#ECE8E1] shadow-xs space-y-4 flex flex-col justify-between">
             <div>
               <h3 className="font-bold text-[#1F2937] text-base">Panduan Operasional Groomer</h3>
-              <p className="text-xs text-[#6B7280] mt-1">
+              <p className="text-xs text-[#6B7280] mt-1 leading-relaxed">
                 Periksa kondisi fisik, kulit, dan kutu anabul sebelum memulai proses mandi atau cukur bulu.
               </p>
-              <div className="mt-4 space-y-2 text-xs text-[#4B5563]">
-                <div className="p-2.5 rounded-xl bg-orange-50 border border-orange-200">
+              <div className="mt-4 space-y-2.5 text-xs text-[#4B5563]">
+                <div className="p-3 rounded-xl bg-orange-50 border border-orange-200">
                   🐾 <strong>Check-in:</strong> Konfirmasi paket & catatan khusus pemilik (alergi sampo/obat).
                 </div>
-                <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-200">
+                <div className="p-3 rounded-xl bg-blue-50 border border-blue-200">
                   ✂️ <strong>Proses:</strong> Update status menjadi "Diproses" di Papan Antrean.
                 </div>
-                <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200">
-                  ✓ <strong>Selesai:</strong> Pindahkan ke "Selesai" agar otomatis muncul di kasir.
+                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200">
+                  ✓ <strong>Selesai:</strong> Pindahkan ke "Selesai" agar otomatis muncul di kasir untuk ditagih.
                 </div>
               </div>
             </div>
 
-            <Link href="/layanan/antrean" className="mt-4">
+            <Link href="/layanan" className="mt-4">
               <Button variant="primary" className="w-full">
                 Buka Papan Antrean Layanan
               </Button>

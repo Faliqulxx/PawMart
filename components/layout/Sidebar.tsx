@@ -15,10 +15,6 @@ import {
   BarChart3,
   Settings,
   PawPrint,
-  Store,
-  ChevronRight,
-  Lock,
-  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserRole, RoleType } from "@/context/UserContext";
@@ -108,11 +104,20 @@ export const navItems: NavItemConfig[] = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { role, currentUser, isAdmin } = useUserRole();
+  const { role, currentUser } = useUserRole();
 
-  // Filter accessible items for the current role
-  const accessibleItems = navItems.filter((item) => item.allowedRoles.includes(role));
-  const restrictedItems = navItems.filter((item) => !item.allowedRoles.includes(role));
+  // Role-based navigation: ONLY render items permitted for current role
+  const permittedItems = navItems.filter((item) =>
+    item.allowedRoles.includes(role)
+  );
+
+  // Dynamic header label strictly per role
+  const menuHeaderLabel =
+    role === "admin"
+      ? "MENU UTAMA"
+      : role === "kasir"
+      ? "MENU KASIR"
+      : "MENU GROOMER";
 
   return (
     <aside className="hidden md:flex flex-col w-64 lg:w-68 bg-white border-r border-[#ECE8E1] shrink-0 h-screen sticky top-0 z-30 select-none">
@@ -138,15 +143,15 @@ export function Sidebar() {
 
       {/* Navigation List */}
       <nav className="flex-1 p-3.5 space-y-1 overflow-y-auto">
-        <div className="flex items-center justify-between px-3 py-1.5 text-[10px] font-semibold tracking-wider text-[#9CA3AF] uppercase">
-          <span>Menu {role === "admin" ? "Lengkap" : role === "kasir" ? "Kasir" : "Groomer"}</span>
+        <div className="flex items-center justify-between px-3 py-1.5 text-[10px] font-bold tracking-wider text-[#9CA3AF] uppercase">
+          <span>{menuHeaderLabel}</span>
           <span className="text-[9px] font-bold text-[#C9772E] bg-[#FBEBDD] px-1.5 py-0.5 rounded">
-            {role.toUpperCase()}
+            {role === "admin" ? "OWNER" : role === "kasir" ? "KASIR" : "GROOMER"}
           </span>
         </div>
 
-        {/* Accessible items */}
-        {accessibleItems.map((item) => {
+        {/* ONLY Render Accessible Items - No locked/disabled items shown */}
+        {permittedItems.map((item) => {
           const isActive =
             item.href === "/"
               ? pathname === "/"
@@ -194,47 +199,18 @@ export function Sidebar() {
             </Link>
           );
         })}
-
-        {/* Restricted Items (Locked for this role) */}
-        {restrictedItems.length > 0 && (
-          <div className="pt-3 mt-3 border-t border-[#ECE8E1]/80">
-            <div className="flex items-center justify-between px-3 py-1 text-[10px] font-semibold tracking-wider text-[#9CA3AF] uppercase">
-              <span>Akses Khusus Owner</span>
-              <Lock size={11} className="text-[#9CA3AF]" />
-            </div>
-            {restrictedItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className="flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-[#9CA3AF] hover:text-[#4B5563] hover:bg-gray-100/70 transition-colors"
-                  title="Menu ini hanya dapat diakses oleh Owner / Admin"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Icon size={16} className="text-[#9CA3AF]" />
-                    <span className="line-through opacity-75">{item.name}</span>
-                  </div>
-                  <span className="text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200/60 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                    <Lock size={9} /> Owner
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
-        )}
       </nav>
 
       {/* User Role Card at bottom */}
       <div className="p-3 border-t border-[#ECE8E1] bg-[#FAF8F5]">
         <div className="p-2.5 rounded-xl bg-white border border-[#ECE8E1] flex items-center justify-between shadow-xs">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-[#FBEBDD] flex items-center justify-center text-sm">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-[#FBEBDD] flex items-center justify-center text-sm shrink-0">
               {currentUser.avatar}
             </div>
             <div className="min-w-0">
               <p className="text-xs font-semibold text-[#1F2937] leading-none truncate">
-                {currentUser.name.split(" ")[0]} ({role === "admin" ? "Owner" : role === "kasir" ? "Kasir" : "Groomer"})
+                {currentUser.name}
               </p>
               <span className="text-[10px] text-[#6B7280] font-medium flex items-center gap-1 mt-1 truncate">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] animate-pulse"></span>
@@ -242,19 +218,6 @@ export function Sidebar() {
               </span>
             </div>
           </div>
-          {isAdmin ? (
-            <Link
-              href="/pengaturan"
-              className="text-[#9CA3AF] hover:text-[#1F2937] p-1"
-              title="Kelola Toko & Pengaturan"
-            >
-              <ChevronRight size={15} />
-            </Link>
-          ) : (
-            <div className="text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded font-bold">
-              Staff
-            </div>
-          )}
         </div>
       </div>
     </aside>

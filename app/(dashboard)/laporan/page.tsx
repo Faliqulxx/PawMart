@@ -37,7 +37,7 @@ import { ProductImage } from "@/components/ui/ProductImage";
 
 export default function LaporanPage() {
   const { showToast } = useToast();
-  const { isAdmin, currentUser, switchRole } = useUserRole();
+  const { isAdmin, currentUser } = useUserRole();
 
   const [activeTab, setActiveTab] = useState<
     "ringkasan" | "layanan" | "penitipan" | "staf" | "voucher"
@@ -104,17 +104,6 @@ export default function LaporanPage() {
               </p>
             </div>
           </div>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => {
-              switchRole("admin");
-              showToast("Beralih ke peran Owner (Akses Penuh Laporan)", "success");
-            }}
-            className="shrink-0 text-xs shadow-md shadow-[#C9772E]/20"
-          >
-            👑 Buka Sebagai Owner
-          </Button>
         </div>
 
         {/* Cashier Shift Report */}

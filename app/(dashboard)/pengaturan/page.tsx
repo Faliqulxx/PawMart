@@ -36,7 +36,7 @@ import { Lock } from "lucide-react";
 
 export default function PengaturanPage() {
   const { showToast } = useToast();
-  const { isAdmin, currentUser, switchRole } = useUserRole();
+  const { isAdmin, currentUser } = useUserRole();
 
   const [activeTab, setActiveTab] = useState<
     | "profil"
@@ -104,17 +104,6 @@ export default function PengaturanPage() {
               </p>
             </div>
           </div>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => {
-              switchRole("admin");
-              showToast("Beralih ke peran Owner (Akses Penuh Pengaturan)", "success");
-            }}
-            className="text-xs shrink-0 shadow-xs"
-          >
-            👑 Beralih ke Owner
-          </Button>
         </div>
       )}
 

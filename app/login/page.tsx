@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { User, Lock, Eye, EyeOff, Sparkles, HelpCircle, X, Check } from "lucide-react";
 import { useUserRole } from "@/context/UserContext";
 import { useToast } from "@/components/ui/Toast";
+import { SYSTEM_USERS, getUserByEmailOrUsername } from "@/data/users";
 
 // Custom Paw Icon matching the Paw Palace logo in the mockup
 function PawPalaceLogoIcon({ className = "w-12 h-12" }: { className?: string }) {
@@ -68,48 +69,36 @@ export default function LoginPage() {
     setIsLoading(true);
 
     setTimeout(() => {
-      // Determine role based on username/email
-      const lower = username.toLowerCase();
-      let role: "admin" | "kasir" | "groomer" = "admin";
-      let customName = "Budi Hartono (Owner)";
+      // Authenticate against verified user directory
+      const matchedUser = getUserByEmailOrUsername(username);
 
-      if (lower.includes("groomer") || lower.includes("rifki") || lower.includes("cukur")) {
-        role = "groomer";
-        customName = "Rifki Groomer (Staff)";
-      } else if (lower.includes("kasir") || lower.includes("staff") || lower.includes("karyawan") || lower.includes("maya")) {
-        role = "kasir";
-        customName = "Maya Kasir (Karyawan)";
+      if (!matchedUser) {
+        setIsLoading(false);
+        setErrorMessage("Akun tidak ditemukan. Gunakan demo: owner@pawmart.id, kasir@pawmart.id, atau groomer@pawmart.id");
+        return;
       }
 
-      const customEmail = username.includes("@") ? username : `${username.toLowerCase()}@pawmart.id`;
-
-      login(role, { name: customName, email: customEmail }, rememberMe);
+      login(matchedUser.id, rememberMe);
       showToast(
-        `Login berhasil! Selamat datang, ${customName} (${role === "admin" ? "Owner Toko" : role === "kasir" ? "Kasir" : "Groomer"}).`,
+        `Login berhasil! Selamat datang, ${matchedUser.name} (${matchedUser.roleLabel}).`,
         "success"
       );
       router.push("/");
     }, 450);
   };
 
-  const handleQuickLogin = (targetRole: "admin" | "kasir" | "groomer") => {
+  const handleQuickLogin = (targetUserId: string) => {
     setIsLoading(true);
     setErrorMessage("");
 
-    const targetUser =
-      targetRole === "admin"
-        ? { name: "Budi Hartono (Owner)", email: "owner@pawmart.id", user: "owner@pawmart.id" }
-        : targetRole === "groomer"
-        ? { name: "Rifki Groomer (Staff)", email: "groomer@pawmart.id", user: "groomer@pawmart.id" }
-        : { name: "Maya Kasir (Karyawan)", email: "kasir@pawmart.id", user: "kasir@pawmart.id" };
-
-    setUsername(targetUser.user);
+    const targetUser = SYSTEM_USERS.find((u) => u.id === targetUserId) || SYSTEM_USERS[0];
+    setUsername(targetUser.email);
     setPassword("••••••••");
 
     setTimeout(() => {
-      login(targetRole, { name: targetUser.name, email: targetUser.email }, rememberMe);
+      login(targetUser.id, rememberMe);
       showToast(
-        `Login simulasi berhasil sebagai ${targetUser.name}!`,
+        `Login berhasil sebagai ${targetUser.name} (${targetUser.roleLabel})!`,
         "success"
       );
       router.push("/");
@@ -277,12 +266,12 @@ export default function LoginPage() {
               </button>
             </form>
 
-            {/* Quick Demo Access for Testing */}
+            {/* Dedicated Demo Accounts for Testing */}
             <div className="mt-6 pt-5 border-t border-[#ECE8E1]">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[11px] font-bold text-[#6B7280] uppercase tracking-wider flex items-center gap-1.5">
                   <Sparkles size={12} className="text-[#F87D19]" />
-                  Akses Cepat Demo
+                  Akses Akun Demo
                 </span>
                 <span className="text-[10px] bg-orange-100 text-[#C9772E] px-2 py-0.5 rounded-full font-semibold">
                   1-Klik Masuk
@@ -292,9 +281,10 @@ export default function LoginPage() {
               <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
-                  onClick={() => handleQuickLogin("admin")}
+                  onClick={() => handleQuickLogin("USR-001")}
                   disabled={isLoading}
                   className="p-2 rounded-xl border border-[#ECE8E1] hover:border-[#F87D19] hover:bg-orange-50/60 transition-all text-left group cursor-pointer"
+                  title="Masuk sebagai Akun Owner (Budi Hartono)"
                 >
                   <div className="flex items-center gap-1 font-bold text-xs text-[#1F2937] group-hover:text-[#F87D19]">
                     <span>👑</span>
@@ -307,12 +297,13 @@ export default function LoginPage() {
 
                 <button
                   type="button"
-                  onClick={() => handleQuickLogin("kasir")}
+                  onClick={() => handleQuickLogin("USR-002")}
                   disabled={isLoading}
                   className="p-2 rounded-xl border border-[#ECE8E1] hover:border-[#F87D19] hover:bg-orange-50/60 transition-all text-left group cursor-pointer"
+                  title="Masuk sebagai Akun Kasir (Maya Kasir)"
                 >
                   <div className="flex items-center gap-1 font-bold text-xs text-[#1F2937] group-hover:text-[#F87D19]">
-                    <span>👩‍💼</span>
+                    <span>👤</span>
                     <span className="truncate">Kasir</span>
                   </div>
                   <p className="text-[9px] text-[#6B7280] mt-0.5 truncate">
@@ -322,9 +313,10 @@ export default function LoginPage() {
 
                 <button
                   type="button"
-                  onClick={() => handleQuickLogin("groomer")}
+                  onClick={() => handleQuickLogin("USR-003")}
                   disabled={isLoading}
                   className="p-2 rounded-xl border border-[#ECE8E1] hover:border-[#F87D19] hover:bg-orange-50/60 transition-all text-left group cursor-pointer"
+                  title="Masuk sebagai Akun Groomer (Rifki Groomer)"
                 >
                   <div className="flex items-center gap-1 font-bold text-xs text-[#1F2937] group-hover:text-[#F87D19]">
                     <span>✂️</span>
@@ -337,7 +329,7 @@ export default function LoginPage() {
               </div>
 
               <p className="text-[10px] text-center text-[#9CA3AF] mt-3">
-                Simulasi aktif • Sesi login diminta setiap web dibuka di sesi baru
+                Sistem RBAC Aktif • Hak akses & UI terkunci sesuai akun yang login
               </p>
             </div>
           </div>
@@ -360,28 +352,37 @@ export default function LoginPage() {
             </div>
 
             <h3 className="text-lg font-bold text-[#1F2937] text-center">
-              Bantuan Akun & Sandi
+              Daftar Akun Pengguna
             </h3>
             <p className="text-xs text-[#6B7280] text-center mt-1 leading-relaxed">
-              Karena aplikasi ini dalam mode simulasi, Anda dapat masuk langsung menggunakan akun demo di bawah ini:
+              Silakan pilih salah satu akun pengguna terdaftar berikut:
             </p>
 
             <div className="space-y-2.5 mt-4">
               <div className="p-3 bg-[#FAF8F5] rounded-xl border border-[#ECE8E1]">
                 <p className="text-xs font-bold text-[#1F2937] flex items-center gap-1.5">
-                  <span>👑</span> Akun Owner (Akses Penuh):
+                  <span>👑</span> Akun Owner:
                 </p>
                 <p className="text-[11px] text-[#6B7280] font-mono mt-0.5">
-                  Email: owner@pawmart.id | Sandi: apa saja
+                  Budi Hartono | owner@pawmart.id
                 </p>
               </div>
 
               <div className="p-3 bg-[#FAF8F5] rounded-xl border border-[#ECE8E1]">
                 <p className="text-xs font-bold text-[#1F2937] flex items-center gap-1.5">
-                  <span>👩‍💼</span> Akun Kasir (Operasional Kasir):
+                  <span>👤</span> Akun Kasir:
                 </p>
                 <p className="text-[11px] text-[#6B7280] font-mono mt-0.5">
-                  Email: kasir@pawmart.id | Sandi: apa saja
+                  Maya Kasir | kasir@pawmart.id
+                </p>
+              </div>
+
+              <div className="p-3 bg-[#FAF8F5] rounded-xl border border-[#ECE8E1]">
+                <p className="text-xs font-bold text-[#1F2937] flex items-center gap-1.5">
+                  <span>✂️</span> Akun Groomer:
+                </p>
+                <p className="text-[11px] text-[#6B7280] font-mono mt-0.5">
+                  Rifki Groomer | groomer@pawmart.id
                 </p>
               </div>
             </div>
@@ -389,11 +390,11 @@ export default function LoginPage() {
             <button
               onClick={() => {
                 setShowForgotModal(false);
-                handleQuickLogin("admin");
+                handleQuickLogin("USR-001");
               }}
               className="w-full mt-5 py-3 rounded-xl bg-[#F87D19] text-white font-bold text-xs uppercase tracking-wider hover:bg-[#E56E0D] transition-colors flex items-center justify-center gap-2 cursor-pointer"
             >
-              <Check size={16} /> Gunakan Akun Owner Sekarang
+              <Check size={16} /> Masuk Sebagai Owner
             </button>
           </div>
         </div>

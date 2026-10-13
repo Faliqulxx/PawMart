@@ -15,13 +15,27 @@ import {
   AlertTriangle,
   Info,
   Shield,
+  Coins,
+  Lock,
+  Clock,
+  Sparkles,
 } from "lucide-react";
 import { useUserRole } from "@/context/UserContext";
+import { useCashierShift } from "@/context/ShiftContext";
 import { useToast } from "@/components/ui/Toast";
+import { OpenShiftModal } from "@/components/pos/OpenShiftModal";
+import { CloseShiftModal } from "@/components/pos/CloseShiftModal";
+import { formatRupiah } from "@/lib/format";
 
 export function Topbar() {
   const router = useRouter();
-  const { currentUser, role, isAdmin, logout } = useUserRole();
+  const { currentUser, role, isAdmin, isKasir, logout } = useUserRole();
+  const {
+    currentShift,
+    isShiftActive,
+    setIsOpenShiftModalOpen,
+    setIsCloseShiftModalOpen,
+  } = useCashierShift();
   const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [showNotifications, setShowNotifications] = useState(false);
@@ -105,6 +119,36 @@ export function Topbar() {
 
         {/* Right Action Icons & User Profile */}
         <div className="flex items-center gap-2 sm:gap-3 ml-auto">
+          {/* Cashier Shift Control Pill (Only for role kasir) */}
+          {role === "kasir" && (
+            <div className="flex items-center gap-1.5">
+              {isShiftActive && currentShift ? (
+                <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200/90 pl-2.5 pr-1 py-1 rounded-full text-xs font-semibold shadow-xs">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span className="hidden sm:inline">Shift #{currentShift.shiftNumber} Aktif</span>
+                  <span className="sm:hidden">S#{currentShift.shiftNumber}</span>
+                  <button
+                    onClick={() => setIsCloseShiftModalOpen(true)}
+                    className="ml-1 flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500 hover:bg-amber-600 text-white transition-all cursor-pointer shadow-xs"
+                    title="Tutup Shift & Rekonsiliasi Kas Laci"
+                  >
+                    <Lock size={12} />
+                    <span>Tutup</span>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setIsOpenShiftModalOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-[#C9772E] hover:bg-[#b06522] text-white shadow-xs transition-all cursor-pointer animate-bounce-subtle"
+                  title="Buka Shift Kasir Baru"
+                >
+                  <Coins size={14} />
+                  <span>Buka Shift</span>
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Informational Role Status Badge (Read-Only Status, Not a Switcher) */}
           <div
             className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold cursor-default select-none shadow-xs ${roleBadgeStyle}`}
@@ -253,6 +297,10 @@ export function Topbar() {
           </div>
         </div>
       </div>
+
+      {/* Cashier Shift Modals */}
+      <OpenShiftModal />
+      <CloseShiftModal />
     </header>
   );
 }

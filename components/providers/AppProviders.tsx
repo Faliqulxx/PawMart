@@ -2,14 +2,17 @@
 
 import React from "react";
 import { UserProvider } from "@/context/UserContext";
+import { ShiftProvider } from "@/context/ShiftContext";
 import { ToastProvider } from "@/components/ui/Toast";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
     <UserProvider>
-      <ToastProvider>
-        {children}
-      </ToastProvider>
+      <ShiftProvider>
+        <ToastProvider>
+          {children}
+        </ToastProvider>
+      </ShiftProvider>
     </UserProvider>
   );
 }

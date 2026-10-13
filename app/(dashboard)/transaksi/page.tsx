@@ -27,6 +27,8 @@ import {
   Award,
   Ticket,
   Gift,
+  Coins,
+  Lock,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -41,6 +43,7 @@ import { PaymentModal } from "@/components/pos/PaymentModal";
 import { ReceiptModal } from "@/components/pos/ReceiptModal";
 import { useToast } from "@/components/ui/Toast";
 import { useUserRole } from "@/context/UserContext";
+import { useCashierShift } from "@/context/ShiftContext";
 import {
   initialVouchers,
   VoucherItem,
@@ -69,6 +72,13 @@ interface HeldTransaction {
 export default function TransaksiPage() {
   const { showToast } = useToast();
   const { currentUser, role, isAdmin } = useUserRole();
+  const {
+    currentShift,
+    isShiftActive,
+    setIsOpenShiftModalOpen,
+    setIsCloseShiftModalOpen,
+    recordTransactionToShift,
+  } = useCashierShift();
 
   // Active Tab: 'pos' | 'riwayat' | 'ditahan'
   const [activeTab, setActiveTab] = useState<"pos" | "riwayat" | "ditahan">("pos");
@@ -391,6 +401,15 @@ export default function TransaksiPage() {
 
   // Validate and open payment modal
   const handleOpenPayment = () => {
+    if (role === "kasir" && !isShiftActive) {
+      showToast(
+        "Anda belum membuka shift kasir! Silakan buka shift dan isi modal awal kas terlebih dahulu.",
+        "error"
+      );
+      setIsOpenShiftModalOpen(true);
+      return;
+    }
+
     if (isCashierExceedingLimit) {
       showToast(
         "Batas diskon kasir adalah Rp 1.000. Untuk diskon lebih besar, hubungi Admin/Owner!",
@@ -444,6 +463,9 @@ export default function TransaksiPage() {
     };
 
     setTransactions((prev) => [newTx, ...prev]);
+    // Catat ke shift aktif jika ada
+    recordTransactionToShift(total, paymentInfo.metodeBayar);
+
     setIsPaymentOpen(false);
     setIsMobileCartOpen(false);
     resetCart();
@@ -519,9 +541,60 @@ export default function TransaksiPage() {
 
       {/* TAB 1: KASIR POS (DUAL PANEL) */}
       {activeTab === "pos" && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-          {/* LEFT PANEL: PRODUCT CATALOG (8 cols) */}
-          <div className="lg:col-span-7 xl:col-span-8 space-y-4">
+        <div className="space-y-4">
+          {/* Shift Banner for Cashier */}
+          {role === "kasir" && (
+            <div>
+              {!isShiftActive ? (
+                <div className="bg-amber-50 border border-amber-200/90 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs animate-in fade-in">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                      <Coins size={20} />
+                    </div>
+                    <div>
+                      <h4 className="text-xs sm:text-sm font-bold text-amber-950">
+                        Shift Kasir Belum Dibuka
+                      </h4>
+                      <p className="text-[11px] sm:text-xs text-amber-800 leading-snug mt-0.5">
+                        Anda harus membuka shift dan mencatat modal awal uang kas (starting float) di laci sebelum memproses transaksi pelanggan.
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => setIsOpenShiftModalOpen(true)}
+                    className="text-xs whitespace-nowrap bg-amber-600 hover:bg-amber-700 text-white shadow-xs"
+                  >
+                    <Coins size={14} /> Buka Shift Sekarang
+                  </Button>
+                </div>
+              ) : currentShift ? (
+                <div className="bg-emerald-50/80 border border-emerald-200 rounded-2xl p-3 px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs text-emerald-950 shadow-xs">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span className="font-bold text-emerald-900">Shift #{currentShift.shiftNumber} Aktif</span>
+                    <span className="text-emerald-400 hidden sm:inline">•</span>
+                    <span className="text-emerald-800 text-[11px] sm:text-xs">
+                      Modal Kas: <strong className="text-emerald-950">{formatRupiah(currentShift.startingCash)}</strong> | Transaksi: <strong className="text-emerald-950">{currentShift.transactionCount}</strong> | Est. Kas Laci: <strong className="text-emerald-950">{formatRupiah(currentShift.expectedCash)}</strong>
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 sm:ml-auto">
+                    <button
+                      onClick={() => setIsCloseShiftModalOpen(true)}
+                      className="px-3 py-1 rounded-lg text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white transition-all cursor-pointer shadow-xs flex items-center gap-1.5"
+                    >
+                      <Lock size={12} /> Tutup Shift
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+            {/* LEFT PANEL: PRODUCT CATALOG (8 cols) */}
+            <div className="lg:col-span-7 xl:col-span-8 space-y-4">
             {/* Search and Category Filter */}
             <Card className="p-3.5 sm:p-4">
               <div className="flex flex-col sm:flex-row gap-3">
@@ -1142,6 +1215,7 @@ export default function TransaksiPage() {
             </div>
           )}
         </div>
+      </div>
       )}
 
       {/* MOBILE CART MODAL / BOTTOM SHEET */}

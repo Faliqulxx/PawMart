@@ -16,6 +16,8 @@ import {
   CheckCircle2,
   Layers,
   ShieldCheck,
+  Coins,
+  Lock,
 } from "lucide-react";
 import Link from "next/link";
 import { StatCard } from "@/components/dashboard/StatCard";
@@ -28,9 +30,16 @@ import { Badge } from "@/components/ui/Badge";
 import { initialBookings } from "@/data/bookings";
 import { initialBoardingStays } from "@/data/boardingStays";
 import { useUserRole } from "@/context/UserContext";
+import { useCashierShift } from "@/context/ShiftContext";
 
 export default function DashboardPage() {
   const { currentUser, role, isAdmin, isKasir, isGroomer } = useUserRole();
+  const {
+    currentShift,
+    isShiftActive,
+    setIsOpenShiftModalOpen,
+    setIsCloseShiftModalOpen,
+  } = useCashierShift();
 
   // Booking stats for today
   const todayBookings = initialBookings.filter((b) => b.tanggal === "2026-10-11");
@@ -181,12 +190,22 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
           <StatCard
             title="Transaksi Shift Saya"
-            value="14 Transaksi"
-            subtitle="Shift Kasir Berjalan"
-            isPositive={true}
+            value={currentShift ? `${currentShift.transactionCount} Transaksi` : "Belum Buka"}
+            subtitle={currentShift ? `Shift #${currentShift.shiftNumber} Berjalan` : "Klik Buka Shift"}
+            isPositive={!!currentShift}
             icon={ShoppingBag}
             iconBg="bg-[#FBEBDD]"
             iconColor="text-[#C9772E]"
+          />
+
+          <StatCard
+            title="Kas Laci Saat Ini"
+            value={currentShift ? formatRupiah(currentShift.expectedCash) : "Rp 0"}
+            subtitle={currentShift ? `Modal + Penjualan Tunai` : "Laci belum aktif"}
+            isPositive={!!currentShift}
+            icon={Coins}
+            iconBg="bg-emerald-50"
+            iconColor="text-emerald-600"
           />
 
           <StatCard
@@ -206,16 +225,6 @@ export default function DashboardPage() {
             icon={CalendarDays}
             iconBg="bg-purple-50"
             iconColor="text-purple-600"
-          />
-
-          <StatCard
-            title="Stok Menipis"
-            value={String(stats.stokMenipis)}
-            subtitle="Perlu perhatian"
-            isDanger={true}
-            icon={AlertTriangle}
-            iconBg="bg-[#FEE2E2]"
-            iconColor="text-[#E5484D]"
           />
         </div>
       ) : (

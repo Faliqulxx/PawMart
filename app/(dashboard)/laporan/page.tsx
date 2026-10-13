@@ -32,17 +32,33 @@ import { formatRupiah } from "@/lib/format";
 import { useToast } from "@/components/ui/Toast";
 import { useUserRole } from "@/context/UserContext";
 import { topSellingProducts } from "@/data/stats";
-import { Lock, ShieldAlert, Sparkles, CheckCircle2 } from "lucide-react";
+import {
+  Lock,
+  ShieldAlert,
+  Sparkles,
+  CheckCircle2,
+  Coins,
+  Eye,
+  Printer,
+  X,
+  UserCheck,
+  Clock,
+  TrendingDown,
+} from "lucide-react";
 import { ProductImage } from "@/components/ui/ProductImage";
+import { useCashierShift } from "@/context/ShiftContext";
+import { CashierShift } from "@/data/shifts";
 
 export default function LaporanPage() {
   const { showToast } = useToast();
   const { isAdmin, currentUser } = useUserRole();
+  const { currentShift, shiftHistory } = useCashierShift();
 
   const [activeTab, setActiveTab] = useState<
-    "ringkasan" | "layanan" | "penitipan" | "staf" | "voucher"
+    "ringkasan" | "layanan" | "penitipan" | "staf" | "voucher" | "shift"
   >("ringkasan");
   const [period, setPeriod] = useState<"hari_ini" | "7_hari" | "30_hari" | "bulan_ini">("30_hari");
+  const [selectedShiftDetail, setSelectedShiftDetail] = useState<CashierShift | null>(null);
 
   // Summary Metrics based on PRD 6.6
   const metrics = {
@@ -156,12 +172,16 @@ export default function LaporanPage() {
           <div className="flex items-center justify-between pb-3 border-b border-[#ECE8E1]">
             <div>
               <h3 className="font-bold text-[#1F2937] text-base">Serah Terima & Tutup Shift Kasir</h3>
-              <p className="text-xs text-[#6B7280]">Pastikan uang fisik di laci kasir cocok sebelum pergantian kasir.</p>
+              <p className="text-xs text-[#6B7280]">
+                {currentShift
+                  ? `Shift #${currentShift.shiftNumber} sedang aktif atas nama ${currentShift.cashierName}`
+                  : "Belum ada shift aktif. Buka shift di kasir untuk memulai transaksi."}
+              </p>
             </div>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => showToast("Rekap shift kasir berhasil dicetak!", "success")}
+              onClick={() => showToast("Rekap shift kasir berhasil disiapkan!", "success")}
               className="text-xs"
             >
               Cetak Rekap Shift
@@ -171,15 +191,21 @@ export default function LaporanPage() {
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
             <div className="p-3 rounded-xl bg-[#FAF8F5] border border-[#ECE8E1]">
               <span className="text-[#6B7280] block text-[11px]">Modal Awal Kasir:</span>
-              <strong className="text-sm text-[#1F2937]">Rp 200.000</strong>
+              <strong className="text-sm text-[#1F2937]">
+                {currentShift ? formatRupiah(currentShift.startingCash) : "Rp 0"}
+              </strong>
             </div>
             <div className="p-3 rounded-xl bg-[#FAF8F5] border border-[#ECE8E1]">
               <span className="text-[#6B7280] block text-[11px]">Penjualan Tunai:</span>
-              <strong className="text-sm text-emerald-600">+ Rp 1.150.000</strong>
+              <strong className="text-sm text-emerald-600">
+                {currentShift ? `+ ${formatRupiah(currentShift.cashSales)}` : "+ Rp 0"}
+              </strong>
             </div>
             <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200">
-              <span className="text-emerald-800 block text-[11px] font-bold">Total Fisik Laci:</span>
-              <strong className="text-sm text-emerald-700">Rp 1.350.000</strong>
+              <span className="text-emerald-800 block text-[11px] font-bold">Total Fisik Seharusnya:</span>
+              <strong className="text-sm text-emerald-700">
+                {currentShift ? formatRupiah(currentShift.expectedCash) : "Rp 0"}
+              </strong>
             </div>
           </div>
         </Card>
@@ -237,6 +263,7 @@ export default function LaporanPage() {
       <div className="flex items-center gap-1.5 p-1 bg-[#ECE8E1]/60 rounded-2xl w-fit overflow-x-auto max-w-full">
         {[
           { id: "ringkasan", label: "📊 Finansial & Produk" },
+          { id: "shift", label: "🪙 Riwayat Shift Kasir" },
           { id: "layanan", label: "✂️ Pendapatan Layanan" },
           { id: "penitipan", label: "🏨 Okupansi Penitipan" },
           { id: "staf", label: "👥 Performa Staf" },
@@ -623,6 +650,359 @@ export default function LaporanPage() {
               <div className="text-xl font-bold text-purple-600 mt-1">PAW10K</div>
               <span className="text-[11px] text-[#6B7280]">18 kali pemakaian</span>
             </Card>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 6: RIWAYAT SHIFT KASIR & REKONSILIASI KAS */}
+      {activeTab === "shift" && (
+        <div className="space-y-5 animate-in fade-in">
+          {/* Active Cashier Shift Card */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <Card className="lg:col-span-2 p-5 border-[#ECE8E1] bg-linear-to-br from-white to-[#FAF8F5]">
+              <div className="flex items-center justify-between pb-3 border-b border-[#ECE8E1]">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                    <Clock size={18} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm text-[#1F2937]">Shift Kasir Aktif Saat Ini</h3>
+                    <p className="text-[11px] text-[#6B7280]">Status kasir yang sedang bertugas melayani transaksi POS</p>
+                  </div>
+                </div>
+                {shiftHistory.some((s) => s.status === "open") ? (
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Sedang Bertugas
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">
+                    Tidak Ada Shift Aktif
+                  </span>
+                )}
+              </div>
+
+              {(() => {
+                const active = shiftHistory.find((s) => s.status === "open");
+                if (!active) {
+                  return (
+                    <div className="py-6 text-center text-xs text-[#6B7280]">
+                      Belum ada kasir yang membuka shift saat ini. Semua shift sebelumnya telah ditutup.
+                    </div>
+                  );
+                }
+                return (
+                  <div className="pt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                    <div className="p-3 rounded-xl bg-white border border-[#ECE8E1]">
+                      <span className="text-[#6B7280] block text-[10px] uppercase font-bold">Kasir</span>
+                      <strong className="text-sm text-[#1F2937] block truncate">{active.cashierName}</strong>
+                      <span className="text-[10px] text-[#9CA3AF]">Shift #{active.shiftNumber}</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-white border border-[#ECE8E1]">
+                      <span className="text-[#6B7280] block text-[10px] uppercase font-bold">Modal Awal</span>
+                      <strong className="text-sm text-[#1F2937] block">{formatRupiah(active.startingCash)}</strong>
+                      <span className="text-[10px] text-[#9CA3AF]">Float laci</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-white border border-[#ECE8E1]">
+                      <span className="text-[#6B7280] block text-[10px] uppercase font-bold">Penjualan Tunai</span>
+                      <strong className="text-sm text-emerald-600 block">+{formatRupiah(active.cashSales)}</strong>
+                      <span className="text-[10px] text-[#9CA3AF]">{active.transactionCount} Transaksi</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200">
+                      <span className="text-emerald-800 block text-[10px] uppercase font-bold">Est. Kas di Laci</span>
+                      <strong className="text-sm text-emerald-800 block">{formatRupiah(active.expectedCash)}</strong>
+                      <span className="text-[10px] text-emerald-600">Modal + Tunai</span>
+                    </div>
+                  </div>
+                );
+              })()}
+            </Card>
+
+            <Card className="p-5 border-[#ECE8E1] flex flex-col justify-between">
+              <div>
+                <span className="text-xs font-bold text-[#6B7280] block mb-1">Audit Rekonsiliasi Kas</span>
+                <h4 className="text-lg font-extrabold text-[#1F2937]">
+                  {shiftHistory.filter((s) => s.status === "closed").length} Shift Ditutup
+                </h4>
+                <p className="text-[11px] text-[#6B7280] mt-1 leading-snug">
+                  Laporan perbandingan antara kas sistem dan penghitungan uang fisik laci oleh kasir.
+                </p>
+              </div>
+
+              <div className="pt-3 border-t border-[#ECE8E1] space-y-2 text-xs">
+                <div className="flex items-center justify-between text-[#4B5563]">
+                  <span>Total Shift Pas / Balance:</span>
+                  <span className="font-bold text-emerald-700">
+                    {shiftHistory.filter((s) => s.cashDifference === 0).length} Shift
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-[#4B5563]">
+                  <span>Shift dengan Selisih:</span>
+                  <span className="font-bold text-amber-700">
+                    {shiftHistory.filter((s) => s.cashDifference !== null && s.cashDifference !== 0).length} Shift
+                  </span>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Shift History Table */}
+          <Card className="overflow-hidden border-[#ECE8E1]">
+            <div className="p-4 sm:p-5 border-b border-[#ECE8E1] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="font-bold text-base text-[#1F2937]">Daftar Rekapitulasi Shift Kasir</h3>
+                <p className="text-xs text-[#6B7280]">
+                  Log riwayat buka/tutup shift, omset penjualan, dan kepatuhan kas laci kasir.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => showToast("Rekapitulasi shift berhasil diekspor ke Excel!", "success")}
+                className="text-xs self-start sm:self-auto border-[#ECE8E1]"
+              >
+                <FileSpreadsheet size={14} /> Ekspor Rekap Shift
+              </Button>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-[#FAF8F5] border-b border-[#ECE8E1] text-[#6B7280] font-bold">
+                    <th className="p-3.5 pl-5">ID Shift</th>
+                    <th className="p-3.5">Kasir Bertugas</th>
+                    <th className="p-3.5">Waktu Shift</th>
+                    <th className="p-3.5 text-right">Modal Awal</th>
+                    <th className="p-3.5 text-right">Penjualan Tunai</th>
+                    <th className="p-3.5 text-right">QRIS / Non-Tunai</th>
+                    <th className="p-3.5 text-right">Kas Aktual</th>
+                    <th className="p-3.5 text-center">Selisih Kas</th>
+                    <th className="p-3.5 text-center">Status</th>
+                    <th className="p-3.5 pr-5 text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#ECE8E1]">
+                  {shiftHistory.map((s) => {
+                    const diff = s.cashDifference;
+                    return (
+                      <tr key={s.id} className="hover:bg-[#FAF8F5]/60 transition-colors">
+                        <td className="p-3.5 pl-5 font-bold text-[#1F2937]">
+                          {s.id}
+                        </td>
+                        <td className="p-3.5">
+                          <span className="font-semibold text-[#1F2937] block">{s.cashierName}</span>
+                          <span className="text-[10px] text-[#9CA3AF]">{s.transactionCount} Transaksi</span>
+                        </td>
+                        <td className="p-3.5 text-[11px] text-[#6B7280]">
+                          <div>
+                            {new Date(s.startTime).toLocaleDateString("id-ID", { day: "2-digit", month: "short" })}{" "}
+                            {new Date(s.startTime).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+                          </div>
+                          <div className="text-[10px] text-[#9CA3AF]">
+                            s/d {s.endTime ? new Date(s.endTime).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "Sekarang"}
+                          </div>
+                        </td>
+                        <td className="p-3.5 text-right font-medium text-[#4B5563]">
+                          {formatRupiah(s.startingCash)}
+                        </td>
+                        <td className="p-3.5 text-right font-semibold text-emerald-700">
+                          {formatRupiah(s.cashSales)}
+                        </td>
+                        <td className="p-3.5 text-right font-medium text-blue-700">
+                          {formatRupiah(s.nonCashSales)}
+                        </td>
+                        <td className="p-3.5 text-right font-bold text-[#1F2937]">
+                          {s.actualCash !== null ? formatRupiah(s.actualCash) : "-"}
+                        </td>
+                        <td className="p-3.5 text-center">
+                          {diff === null ? (
+                            <span className="text-[11px] text-[#9CA3AF]">Shift Aktif</span>
+                          ) : diff === 0 ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <CheckCircle2 size={11} /> Pas (Rp 0)
+                            </span>
+                          ) : diff < 0 ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                              <TrendingDown size={11} /> {formatRupiah(diff)}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                              +{formatRupiah(diff)}
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-3.5 text-center">
+                          {s.status === "open" ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                              Aktif
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-700">
+                              Selesai
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-3.5 pr-5 text-center">
+                          <button
+                            onClick={() => setSelectedShiftDetail(s)}
+                            className="inline-flex items-center gap-1 text-[11px] font-bold text-[#C9772E] hover:underline cursor-pointer bg-[#FBEBDD]/60 hover:bg-[#FBEBDD] px-2.5 py-1 rounded-lg transition-colors"
+                          >
+                            <Eye size={12} /> Struk Rekap
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* MODAL STRUK REKAPITULASI SHIFT */}
+      {selectedShiftDetail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl border border-[#ECE8E1] relative animate-in zoom-in-95 my-8">
+            <button
+              onClick={() => setSelectedShiftDetail(null)}
+              className="absolute top-4 right-4 text-[#9CA3AF] hover:text-[#1F2937] p-1 rounded-full transition-colors cursor-pointer"
+            >
+              <X size={20} />
+            </button>
+
+            {/* Receipt Header */}
+            <div className="text-center pb-4 border-b border-dashed border-[#D1D5DB]">
+              <div className="inline-flex items-center justify-center w-11 h-11 rounded-2xl bg-[#FBEBDD] text-[#C9772E] mb-2">
+                <Coins size={22} />
+              </div>
+              <h3 className="font-extrabold text-base text-[#1F2937] tracking-tight uppercase">
+                PawMart Pet Shop & Care
+              </h3>
+              <p className="text-[11px] font-bold text-[#6B7280] tracking-wider uppercase mt-0.5">
+                Struk Rekapitulasi Shift Kasir
+              </p>
+              <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FAF8F5] border border-[#ECE8E1] text-[#4B5563]">
+                {selectedShiftDetail.id}
+              </span>
+            </div>
+
+            {/* Receipt Meta */}
+            <div className="py-3 text-xs space-y-1.5 border-b border-dashed border-[#D1D5DB] text-[#4B5563]">
+              <div className="flex justify-between">
+                <span>Kasir Bertugas:</span>
+                <span className="font-bold text-[#1F2937]">{selectedShiftDetail.cashierName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Nomor Shift:</span>
+                <span className="font-semibold text-[#1F2937]">Shift #{selectedShiftDetail.shiftNumber}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Waktu Buka:</span>
+                <span className="font-semibold text-[#1F2937]">
+                  {new Date(selectedShiftDetail.startTime).toLocaleString("id-ID", {
+                    day: "2-digit",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Waktu Tutup:</span>
+                <span className="font-semibold text-[#1F2937]">
+                  {selectedShiftDetail.endTime
+                    ? new Date(selectedShiftDetail.endTime).toLocaleString("id-ID", {
+                        day: "2-digit",
+                        month: "short",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
+                    : "Shift Masih Aktif"}
+                </span>
+              </div>
+            </div>
+
+            {/* Financial Reconciliation Breakdown */}
+            <div className="py-3.5 text-xs space-y-2 border-b border-dashed border-[#D1D5DB]">
+              <div className="flex justify-between text-[#4B5563]">
+                <span>Modal Awal Kas:</span>
+                <span className="font-semibold">{formatRupiah(selectedShiftDetail.startingCash)}</span>
+              </div>
+              <div className="flex justify-between text-[#4B5563]">
+                <span>Penjualan Tunai:</span>
+                <span className="font-semibold text-emerald-700">+{formatRupiah(selectedShiftDetail.cashSales)}</span>
+              </div>
+              <div className="flex justify-between text-[#4B5563]">
+                <span>Penjualan QRIS / Non-Tunai:</span>
+                <span className="font-semibold text-blue-700">{formatRupiah(selectedShiftDetail.nonCashSales)}</span>
+              </div>
+              <div className="flex justify-between text-[#1F2937] font-bold pt-1 border-t border-[#ECE8E1]">
+                <span>Total Omset ({selectedShiftDetail.transactionCount} Transaksi):</span>
+                <span>{formatRupiah(selectedShiftDetail.totalSales)}</span>
+              </div>
+            </div>
+
+            {/* Drawer Cash Audit */}
+            <div className="py-3 text-xs space-y-2 bg-[#FAF8F5] p-3 rounded-2xl border border-[#ECE8E1] my-3">
+              <div className="flex justify-between text-[#4B5563]">
+                <span>Kas Seharusnya di Laci:</span>
+                <span className="font-extrabold text-[#1F2937]">{formatRupiah(selectedShiftDetail.expectedCash)}</span>
+              </div>
+              <div className="flex justify-between text-[#4B5563]">
+                <span>Kas Aktual (Hitungan Fisik):</span>
+                <span className="font-extrabold text-[#1F2937]">
+                  {selectedShiftDetail.actualCash !== null ? formatRupiah(selectedShiftDetail.actualCash) : "Belum Dihitung"}
+                </span>
+              </div>
+              <div className="flex justify-between pt-1.5 border-t border-[#ECE8E1]">
+                <span className="font-bold">Selisih Kas:</span>
+                <span
+                  className={`font-black ${
+                    selectedShiftDetail.cashDifference === 0
+                      ? "text-emerald-700"
+                      : (selectedShiftDetail.cashDifference || 0) < 0
+                      ? "text-rose-700"
+                      : "text-amber-700"
+                  }`}
+                >
+                  {selectedShiftDetail.cashDifference === null
+                    ? "-"
+                    : selectedShiftDetail.cashDifference === 0
+                    ? "Rp 0 (Pas)"
+                    : (selectedShiftDetail.cashDifference || 0) > 0
+                    ? `+${formatRupiah(selectedShiftDetail.cashDifference || 0)} (Lebih)`
+                    : `${formatRupiah(selectedShiftDetail.cashDifference || 0)} (Kurang)`}
+                </span>
+              </div>
+            </div>
+
+            {selectedShiftDetail.notes && (
+              <div className="p-2.5 bg-amber-50/70 rounded-xl border border-amber-200/80 text-[11px] text-amber-900 mb-3">
+                <span className="font-bold block">Catatan Kasir:</span>
+                <p className="mt-0.5 leading-relaxed">{selectedShiftDetail.notes}</p>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="pt-2 flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setSelectedShiftDetail(null)}
+                className="flex-1 text-xs py-2.5 border-[#ECE8E1]"
+              >
+                Tutup
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  showToast("Mencetak struk rekapitulasi shift ke thermal printer...", "success");
+                }}
+                className="flex-1 text-xs py-2.5 shadow-md shadow-[#C9772E]/20"
+              >
+                <Printer size={15} /> Cetak Struk
+              </Button>
+            </div>
           </div>
         </div>
       )}

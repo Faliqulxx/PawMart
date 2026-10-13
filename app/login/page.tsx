@@ -126,8 +126,8 @@ export default function LoginPage() {
         <div className="w-full flex items-center justify-center lg:justify-start">
           <div className="w-full max-w-[440px] bg-white rounded-[26px] shadow-2xl shadow-orange-950/25 p-8 sm:p-10 border border-white/80">
             
-            {/* Logo Paw Palace */}
-            <div className="flex items-center gap-3.5 mb-5 text-left">
+            {/* Logo Paw Palace - Centered */}
+            <div className="flex items-center justify-center gap-3.5 mb-5 text-center">
               <PawPalaceLogoIcon className="w-11 h-11 shrink-0" />
               <div className="text-left flex flex-col justify-center">
                 <h1 className="text-xl sm:text-2xl font-black text-[#1F2937] tracking-tight uppercase leading-none font-sans">
@@ -139,8 +139,8 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Judul & Subtitle - Alignment Kiri Konsisten */}
-            <div className="text-left mb-6">
+            {/* Judul & Subtitle - Centered */}
+            <div className="text-center mb-6">
               <h2 className="text-2xl sm:text-3xl font-black text-[#1F2937] tracking-tight leading-tight">
                 Selamat Datang!
               </h2>
@@ -264,11 +264,29 @@ export default function LoginPage() {
               </button>
             </form>
 
+            {/* Divider "atau" */}
+            <div className="relative my-5">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-[#ECE8E1]"></div>
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="bg-white px-3 text-[#9CA3AF] text-[11px] font-medium">
+                  atau
+                </span>
+              </div>
+            </div>
+
             {/* Compact Demo Account Selector */}
-            <div className="mt-6 pt-5 border-t border-[#ECE8E1] text-left">
-              <span className="text-[10px] font-black text-[#6B7280] uppercase tracking-wider block mb-2.5">
-                AKSES AKUN DEMO
-              </span>
+            <div className="text-left">
+              <div className="mb-2.5">
+                <div className="flex items-center gap-1.5 text-[11px] font-black text-[#6B7280] uppercase tracking-wider">
+                  <Sparkles size={12} className="text-[#F87D19]" />
+                  <span>AKSES AKUN DEMO</span>
+                </div>
+                <p className="text-[10px] text-[#9CA3AF] mt-0.5">
+                  Klik untuk masuk sebagai akun demo
+                </p>
+              </div>
 
               <div className="grid grid-cols-3 gap-2">
                 <button
@@ -304,10 +322,6 @@ export default function LoginPage() {
                   <span>Groomer</span>
                 </button>
               </div>
-
-              <p className="text-[10.5px] text-center text-[#9CA3AF] mt-2.5">
-                Klik untuk masuk sebagai akun demo
-              </p>
             </div>
           </div>
         </div>

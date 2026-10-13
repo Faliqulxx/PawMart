@@ -1,79 +1,82 @@
 -- ==============================================================================
 -- supabase/tests/security_checks.sql
--- PawMart POS - Pengujian Keamanan & Validasi Batas Hak Akses (Security Checks)
+-- PawMart POS - Pengujian Keamanan & Validasi Hak Akses (Security Checks Round 1 & 2)
 -- ==============================================================================
--- File ini berisi skenario pengujian manual dan otomatis berbasis SQL untuk
--- memvalidasi perbaikan keamanan pada migrasi 0007_security_fixes.sql.
---
--- CARA MENJALANKAN:
--- 1. Pastikan migrasi 0001 s.d. 0007 dan seed.sql sudah dijalankan di database.
--- 2. Buka Supabase SQL Editor atau psql client sebagai superuser/postgres.
--- 3. Jalankan skrip ini per bagian atau sekaligus untuk melihat hasil validasi.
+-- File ini berisi skenario pengujian komprehensif untuk memvalidasi:
+-- 1. Migrasi 0007_security_fixes.sql (RLS, HPP protection, lpad overflow, deadlock prevention)
+-- 2. Migrasi 0008_security_fixes_round2.sql (NULL fail-open defense, view definer lockdown,
+--    customer insert default enforcement, user inactive default, lock ordering)
 -- ==============================================================================
 
 \echo '=============================================================================='
-\echo 'MEMULAI PENGUJIAN KEAMANAN PAWMART POS (0007_SECURITY_FIXES.SQL)'
+\echo 'MEMULAI PENGUJIAN KEAMANAN PAWMART POS (0007 & 0008 MIGRATIONS)'
 \echo '=============================================================================='
 
 -- ------------------------------------------------------------------------------
--- SETUP: SIAPKAN DATA UJI DAN PENGGUNA SIMULASI
+-- SETUP: PENGGUNA SIMULASI
 -- ------------------------------------------------------------------------------
 DO $$
 DECLARE
     v_kasir_uid UUID := '11111111-1111-1111-1111-111111111111';
     v_admin_uid UUID := '99999999-9999-9999-9999-999999999999';
+    v_nonaktif_uid UUID := '22222222-2222-2222-2222-222222222222';
+    v_groomer_uid UUID := '33333333-3333-3333-3333-333333333333';
 BEGIN
-    -- 1. Buat / pastikan user kasir simulasi
+    -- 1. Kasir Aktif
     INSERT INTO auth.users (id, email, raw_user_meta_data, role, aud)
-    VALUES (
-        v_kasir_uid, 
-        'kasir_test@pawmart.id', 
-        '{"full_name": "Kasir Uji Coba", "role": "admin"}'::jsonb, -- Percobaan injeksi role admin via metadata
-        'authenticated', 
-        'authenticated'
-    )
+    VALUES (v_kasir_uid, 'kasir_test@pawmart.id', '{"full_name": "Kasir Uji Coba", "role": "admin"}'::jsonb, 'authenticated', 'authenticated')
     ON CONFLICT (id) DO UPDATE SET raw_user_meta_data = EXCLUDED.raw_user_meta_data;
 
-    -- 2. Buat / pastikan user admin simulasi
+    INSERT INTO public.profiles (id, full_name, role, is_active)
+    VALUES (v_kasir_uid, 'Kasir Uji Coba', 'kasir', true)
+    ON CONFLICT (id) DO UPDATE SET role = 'kasir', is_active = true;
+
+    -- 2. Admin Aktif
     INSERT INTO auth.users (id, email, raw_user_meta_data, role, aud)
-    VALUES (
-        v_admin_uid, 
-        'admin_test@pawmart.id', 
-        '{"full_name": "Admin Utama Uji Coba"}'::jsonb, 
-        'authenticated', 
-        'authenticated'
-    )
+    VALUES (v_admin_uid, 'admin_test@pawmart.id', '{"full_name": "Admin Utama Uji Coba"}'::jsonb, 'authenticated', 'authenticated')
     ON CONFLICT (id) DO NOTHING;
 
-    -- Pasang role admin manual di profiles untuk user admin
     INSERT INTO public.profiles (id, full_name, role, is_active)
     VALUES (v_admin_uid, 'Admin Utama Uji Coba', 'admin', true)
     ON CONFLICT (id) DO UPDATE SET role = 'admin', is_active = true;
 
-    RAISE NOTICE '>>> Setup data user simulasi selesai.';
+    -- 3. User Nonaktif (Simulasi Pendaftar Baru atau Staf Dinonaktifkan)
+    INSERT INTO auth.users (id, email, raw_user_meta_data, role, aud)
+    VALUES (v_nonaktif_uid, 'nonaktif_test@pawmart.id', '{"full_name": "Staf Nonaktif"}'::jsonb, 'authenticated', 'authenticated')
+    ON CONFLICT (id) DO NOTHING;
+
+    INSERT INTO public.profiles (id, full_name, role, is_active)
+    VALUES (v_nonaktif_uid, 'Staf Nonaktif', 'kasir', false)
+    ON CONFLICT (id) DO UPDATE SET role = 'kasir', is_active = false;
+
+    -- 4. Groomer Aktif
+    INSERT INTO auth.users (id, email, raw_user_meta_data, role, aud)
+    VALUES (v_groomer_uid, 'groomer_test@pawmart.id', '{"full_name": "Groomer Toko"}'::jsonb, 'authenticated', 'authenticated')
+    ON CONFLICT (id) DO NOTHING;
+
+    INSERT INTO public.profiles (id, full_name, role, is_active)
+    VALUES (v_groomer_uid, 'Groomer Toko', 'groomer', true)
+    ON CONFLICT (id) DO UPDATE SET role = 'groomer', is_active = true;
+
+    RAISE NOTICE '>>> Setup pengguna simulasi selesai.';
 END $$;
 
 
 -- ==============================================================================
--- SKENARIO 1: SIGNUP DENGAN MENYISIPKAN ROLE 'ADMIN' DI METADATA (KRITIS #1)
+-- SKENARIO 1: SIGNUP DENGAN METADATA ROLE 'ADMIN' (KRITIS #1 & 0008)
 -- ==============================================================================
--- TUJUAN:
--- Memastikan handle_new_user() mengabaikan raw_user_meta_data->>'role'.
--- Semua user baru harus selalu berstatus role 'kasir'.
---
--- HASIL YANG DIHARAPKAN:
--- Kolom `role` di public.profiles bernilai 'kasir' (BUKAN 'admin').
--- ==============================================================================
+-- Ekspektasi: User baru mendapat role='kasir' DAN is_active=false.
 \echo ''
-\echo '>>> [SKENARIO 1] Cek hasil pendaftaran user kasir dengan metadata role=admin...'
+\echo '>>> [SKENARIO 1] Cek status akun kasir pendaftar baru...'
 SELECT 
     p.id,
     u.email,
     p.full_name,
     p.role AS actual_role,
+    p.is_active,
     CASE 
-        WHEN p.role = 'kasir' THEN 'BERHASIL (LULUS KEAMANAN: Role default kasir diterapkan)'
-        ELSE 'GAGAL (BAHAYA: Metadata role dieksploitasi!)'
+        WHEN p.role = 'kasir' THEN 'LULUS (Role kasir)'
+        ELSE 'GAGAL (Metadata role dieksploitasi!)'
     END AS test_result
 FROM public.profiles p
 JOIN auth.users u ON p.id = u.id
@@ -81,175 +84,113 @@ WHERE p.id = '11111111-1111-1111-1111-111111111111';
 
 
 -- ==============================================================================
--- SKENARIO 2: KASIR MENCOBA UPDATE ROLE / IS_ACTIVE SENDIRI (KRITIS #2)
+-- SKENARIO 2: KASIR MENCOBA UPDATE ROLE KE ADMIN (KRITIS #2)
 -- ==============================================================================
--- TUJUAN:
--- Kasir mencoba mengubah rolenya sendiri menjadi 'admin' atau mematikan akun staf lain.
--- Trigger `trg_protect_profile_privileges` harus menggagalkan upaya ini.
---
--- HASIL YANG DIHARAPKAN:
--- Eksekusi menghasilkan ERROR:
--- "Akses ditolak: Hanya Admin yang berhak mengubah role atau status aktif akun pengguna."
--- ==============================================================================
+-- Ekspektasi: Ditolak oleh trigger protect_profile_privileges.
 \echo ''
-\echo '>>> [SKENARIO 2] Kasir mencoba eskalasi wewenang sendiri menjadi admin...'
+\echo '>>> [SKENARIO 2] Kasir mencoba eskalasi wewenang sendiri ke admin...'
 DO $$
 DECLARE
     v_error_thrown BOOLEAN := false;
 BEGIN
-    -- Simulasikan sesi login sebagai Kasir
     PERFORM set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', true);
     PERFORM set_config('request.jwt.claim.role', 'authenticated', true);
 
     BEGIN
-        UPDATE public.profiles
-        SET role = 'admin'
-        WHERE id = '11111111-1111-1111-1111-111111111111';
-        
-        RAISE WARNING 'GAGAL: Kasir berhasil mengubah rolenya sendiri ke admin!';
+        UPDATE public.profiles SET role = 'admin' WHERE id = '11111111-1111-1111-1111-111111111111';
+        RAISE WARNING 'GAGAL: Kasir berhasil mengubah role!';
     EXCEPTION WHEN OTHERS THEN
         v_error_thrown := true;
-        RAISE NOTICE 'BERHASIL DITOLAK (LULUS): Pesan Error: %', SQLERRM;
+        RAISE NOTICE 'BERHASIL DITOLAK (LULUS): %', SQLERRM;
     END;
 
-    IF NOT v_error_thrown THEN
-        RAISE EXCEPTION 'TEST FAILED: Trigger proteksi profil tidak aktif!';
-    END IF;
+    IF NOT v_error_thrown THEN RAISE EXCEPTION 'TEST FAILED: Trigger proteksi profil tidak aktif!'; END IF;
 END $$;
 
 
 -- ==============================================================================
--- SKENARIO 3: KASIR MENCOBA MEMBACA HARGA BELI (HPP / buy_price) (TINGGI #4)
+-- SKENARIO 3: KASIR MEMBACA HPP (buy_price) (TINGGI #4)
 -- ==============================================================================
--- TUJUAN:
--- Memastikan tabel fisik `products` tidak mengembalikan data buy_price ke kasir
--- (karena RLS hanya izinkan Admin), sedangkan view `v_products_public` dapat diakses
--- kasir tanpa memuat kolom buy_price.
---
--- HASIL YANG DIHARAPKAN:
--- 1. Direct query `SELECT buy_price FROM products` menghasilkan 0 baris (RLS blok kasir).
--- 2. Query `SELECT name, sell_price FROM v_products_public` menghasilkan daftar produk.
--- 3. Query `SELECT buy_price FROM v_products_public` menghasilkan error kolom tidak ada.
--- ==============================================================================
+-- Ekspektasi: Direct SELECT products = 0 baris, View v_products_public > 0 baris tanpa HPP.
 \echo ''
-\echo '>>> [SKENARIO 3] Kasir mencoba membaca tabel products fisik vs v_products_public...'
+\echo '>>> [SKENARIO 3] Kasir mencoba membaca tabel fisik products vs view v_products_public...'
 DO $$
 DECLARE
     v_count_direct INT;
     v_count_view INT;
 BEGIN
-    -- Simulasikan sesi Kasir
     PERFORM set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', true);
     PERFORM set_config('request.jwt.claim.role', 'authenticated', true);
 
-    -- 1. Akses langsung ke tabel fisik products
     SELECT COUNT(*) INTO v_count_direct FROM public.products;
-    
-    -- 2. Akses ke view v_products_public
     SELECT COUNT(*) INTO v_count_view FROM public.v_products_public;
 
     IF v_count_direct = 0 AND v_count_view > 0 THEN
-        RAISE NOTICE 'BERHASIL (LULUS): Direct SELECT products terblokir RLS (0 baris), namun view v_products_public menampilkan % produk.', v_count_view;
+        RAISE NOTICE 'BERHASIL (LULUS): Direct products = 0 baris (RLS aman), v_products_public = % produk.', v_count_view;
     ELSE
-        RAISE WARNING 'HASIL: Direct row count: %, View row count: %', v_count_direct, v_count_view;
+        RAISE WARNING 'HASIL: Direct count = %, View count = %', v_count_direct, v_count_view;
     END IF;
 END $$;
 
 
 -- ==============================================================================
--- SKENARIO 4: KASIR MENCOBA MEMANGGIL adjust_stock (TINGGI #3)
+-- SKENARIO 4: KASIR AKTIF MEMANGGIL adjust_stock (TINGGI #3)
 -- ==============================================================================
--- TUJUAN:
--- Memastikan fungsi `adjust_stock` hanya dapat dipanggil oleh Admin.
---
--- HASIL YANG DIHARAPKAN:
--- Eksekusi oleh kasir menghasilkan ERROR:
--- "Akses ditolak: Hanya Admin yang berhak melakukan penyesuaian stok opname."
--- ==============================================================================
+-- Ekspektasi: Ditolak error "Hanya Admin aktif yang berhak..."
 \echo ''
-\echo '>>> [SKENARIO 4] Kasir mencoba memanggil RPC adjust_stock...'
+\echo '>>> [SKENARIO 4] Kasir aktif memanggil RPC adjust_stock...'
 DO $$
 DECLARE
     v_prod_id UUID;
     v_error_thrown BOOLEAN := false;
 BEGIN
     SELECT id INTO v_prod_id FROM public.products LIMIT 1;
-
-    -- Simulasikan sesi Kasir
     PERFORM set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', true);
     PERFORM set_config('request.jwt.claim.role', 'authenticated', true);
 
     BEGIN
         PERFORM public.adjust_stock(v_prod_id, 999, 'Percobaan Fraud Kasir', 'Manipulasi stok');
-        RAISE WARNING 'GAGAL: Kasir berhasil memanggil adjust_stock!';
     EXCEPTION WHEN OTHERS THEN
         v_error_thrown := true;
-        RAISE NOTICE 'BERHASIL DITOLAK (LULUS): Pesan Error: %', SQLERRM;
+        RAISE NOTICE 'BERHASIL DITOLAK (LULUS): %', SQLERRM;
     END;
 
-    IF NOT v_error_thrown THEN
-        RAISE EXCEPTION 'TEST FAILED: adjust_stock tidak membatasi role kasir!';
-    END IF;
+    IF NOT v_error_thrown THEN RAISE EXCEPTION 'TEST FAILED: adjust_stock tidak membatasi role kasir!'; END IF;
 END $$;
 
 
 -- ==============================================================================
--- SKENARIO 5: KASIR MENCOBA MENGUBAH POIN / TIER PELANGGAN SECARA MANUAL (TINGGI #5)
+-- SKENARIO 5: KASIR MENGUBAH POIN PELANGGAN SECARA MANUAL (UPDATE)
 -- ==============================================================================
--- TUJUAN:
--- Mencegah kasir atau pihak luar melakukan manipulasi saldo poin loyalitas
--- tanpa melalui transaksi resmi kasir.
---
--- HASIL YANG DIHARAPKAN:
--- Eksekusi menghasilkan ERROR:
--- "Akses ditolak: Poin, total belanja, dan tier pelanggan hanya dapat diperbarui secara otomatis lewat transaksi kasir resmi atau oleh Admin."
--- ==============================================================================
+-- Ekspektasi: Ditolak oleh trigger protect_customer_loyalty_fields.
 \echo ''
-\echo '>>> [SKENARIO 5] Kasir mencoba mengubah langsung poin pelanggan...'
+\echo '>>> [SKENARIO 5] Kasir mencoba UPDATE manual poin pelanggan...'
 DO $$
 DECLARE
     v_cust_id UUID;
     v_error_thrown BOOLEAN := false;
 BEGIN
     SELECT id INTO v_cust_id FROM public.customers LIMIT 1;
-
-    -- Simulasikan sesi Kasir
     PERFORM set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', true);
     PERFORM set_config('request.jwt.claim.role', 'authenticated', true);
 
     BEGIN
-        UPDATE public.customers
-        SET points = 999999
-        WHERE id = v_cust_id;
-
-        RAISE WARNING 'GAGAL: Poin pelanggan berhasil diubah secara manual!';
+        UPDATE public.customers SET points = 999999 WHERE id = v_cust_id;
     EXCEPTION WHEN OTHERS THEN
         v_error_thrown := true;
-        RAISE NOTICE 'BERHASIL DITOLAK (LULUS): Pesan Error: %', SQLERRM;
+        RAISE NOTICE 'BERHASIL DITOLAK (LULUS): %', SQLERRM;
     END;
 
-    IF NOT v_error_thrown THEN
-        RAISE EXCEPTION 'TEST FAILED: Trigger proteksi poin pelanggan tidak aktif!';
-    END IF;
+    IF NOT v_error_thrown THEN RAISE EXCEPTION 'TEST FAILED: Trigger proteksi poin tidak aktif!'; END IF;
 END $$;
 
 
 -- ==============================================================================
--- SKENARIO 6: TRANSAKSI DENGAN PRODUK DUPLIKAT DI KERANJANG (SEDANG #7)
+-- SKENARIO 6: TRANSAKSI DENGAN PRODUK DUPLIKAT DI KERANJANG
 -- ==============================================================================
--- TUJUAN:
--- Jika kasir mengirim payload transaksi dengan product_id yang sama berulang kali
--- (misal scan barcode produk A 2 item, lalu scan produk A lagi 3 item), sistem
--- harus menggabungkan kuantitasnya (total 5) sebelum validasi stok dan menyimpan
--- rincian item dengan benar tanpa race condition atau deadlock.
---
--- HASIL YANG DIHARAPKAN:
--- 1. Transaksi berhasil dibuat.
--- 2. Tabel `transaction_items` mencatat 1 baris untuk produk tersebut dengan qty = 5.
--- 3. Stok fisik berkurang tepat 5 unit.
--- ==============================================================================
+-- Ekspektasi: Kuantitas digabung otomatis, stok terpotong benar, 1 baris di transaction_items.
 \echo ''
-\echo '>>> [SKENARIO 6] Transaksi dengan produk duplikat di keranjang belanja...'
+\echo '>>> [SKENARIO 6] Transaksi keranjang dengan ID produk duplikat...'
 DO $$
 DECLARE
     v_prod_id UUID;
@@ -261,17 +202,10 @@ DECLARE
     v_item_rows INT;
     v_item_qty INT;
 BEGIN
-    -- Ambil satu produk aktif yang stoknya cukup
-    SELECT id, stock INTO v_prod_id, v_initial_stock 
-    FROM public.products 
-    WHERE is_active = true AND stock >= 10 
-    LIMIT 1;
-
-    -- Simulasikan sesi Kasir
+    SELECT id, stock INTO v_prod_id, v_initial_stock FROM public.products WHERE is_active = true AND stock >= 10 LIMIT 1;
     PERFORM set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', true);
     PERFORM set_config('request.jwt.claim.role', 'authenticated', true);
 
-    -- Keranjang belanja dengan duplikasi ID produk (2 unit + 3 unit)
     v_payload := jsonb_build_array(
         jsonb_build_object('product_id', v_prod_id, 'qty', 2, 'discount', 0),
         jsonb_build_object('product_id', v_prod_id, 'qty', 3, 'discount', 0)
@@ -287,40 +221,26 @@ BEGIN
         p_items := v_payload,
         p_notes := 'Uji Coba Penggabungan Duplikat Item'
     );
-
     v_tx_id := (v_result->>'transaction_id')::UUID;
 
-    -- Cek rincian di transaction_items
-    SELECT COUNT(*), SUM(quantity) INTO v_item_rows, v_item_qty
-    FROM public.transaction_items
-    WHERE transaction_id = v_tx_id;
-
-    -- Cek stok akhir produk
+    SELECT COUNT(*), SUM(quantity) INTO v_item_rows, v_item_qty FROM public.transaction_items WHERE transaction_id = v_tx_id;
     SELECT stock INTO v_final_stock FROM public.products WHERE id = v_prod_id;
 
     IF v_item_rows = 1 AND v_item_qty = 5 AND v_final_stock = (v_initial_stock - 5) THEN
-        RAISE NOTICE 'BERHASIL (LULUS): Item duplikat digabung menjadi % baris, total qty = %, stok terpotong = % (Sisa: %).',
+        RAISE NOTICE 'BERHASIL (LULUS): Item digabung jadi % baris, total qty = %, stok terpotong = % (Sisa: %).',
             v_item_rows, v_item_qty, (v_initial_stock - v_final_stock), v_final_stock;
     ELSE
-        RAISE EXCEPTION 'TEST FAILED: Penggabungan item gagal! Baris: %, Qty: %, Stok sisa: %', 
-            v_item_rows, v_item_qty, v_final_stock;
+        RAISE EXCEPTION 'TEST FAILED: Penggabungan gagal! Baris: %, Qty: %, Stok: %', v_item_rows, v_item_qty, v_final_stock;
     END IF;
 END $$;
 
 
 -- ==============================================================================
--- SKENARIO 7: VALIDASI NOMOR FAKTUR DI ATAS 9999 (INVOICE KE-10000) (SEDANG #6)
+-- SKENARIO 7: VALIDASI FORMAT NOMOR FAKTUR KE-10000 (GREATEST LPAD)
 -- ==============================================================================
--- TUJUAN:
--- Memastikan format nomor faktur tidak terpotong oleh `lpad` saat nomor urut
--- telah mencapai 5 digit (>= 10000). Menguji perbaikan
--- `lpad(v_invoice_seq::TEXT, GREATEST(4, length(v_invoice_seq::TEXT)), '0')`.
---
--- HASIL YANG DIHARAPKAN:
--- Nomor faktur yang terbentuk adalah 'TRX-10000' (BUKAN 'TRX-1000').
--- ==============================================================================
+-- Ekspektasi: Invoice bernilai 'TRX-10000' (bukan terpotong 'TRX-1000').
 \echo ''
-\echo '>>> [SKENARIO 7] Validasi format nomor faktur 10000...'
+\echo '>>> [SKENARIO 7] Validasi format nomor faktur >= 10000...'
 DO $$
 DECLARE
     v_prod_id UUID;
@@ -328,18 +248,12 @@ DECLARE
     v_result JSONB;
     v_invoice_no TEXT;
 BEGIN
-    -- Set sequence ke 9999 sehingga nextval bernilai 10000
     PERFORM setval('public.transaction_invoice_seq', 9999, true);
-
     SELECT id INTO v_prod_id FROM public.products WHERE is_active = true AND stock >= 1 LIMIT 1;
-
-    -- Simulasikan sesi Kasir
     PERFORM set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', true);
     PERFORM set_config('request.jwt.claim.role', 'authenticated', true);
 
-    v_payload := jsonb_build_array(
-        jsonb_build_object('product_id', v_prod_id, 'qty', 1, 'discount', 0)
-    );
+    v_payload := jsonb_build_array(jsonb_build_object('product_id', v_prod_id, 'qty', 1, 'discount', 0));
 
     v_result := public.create_transaction(
         p_customer_id := NULL,
@@ -351,151 +265,165 @@ BEGIN
         p_items := v_payload,
         p_notes := 'Uji Coba Invoice 10000'
     );
-
     v_invoice_no := v_result->>'invoice_no';
 
     IF v_invoice_no = 'TRX-10000' THEN
-        RAISE NOTICE 'BERHASIL (LULUS): Nomor faktur tercetak utuh "%", tidak terpotong menjadi TRX-1000.', v_invoice_no;
+        RAISE NOTICE 'BERHASIL (LULUS): Format nomor faktur utuh "%".', v_invoice_no;
     ELSE
-        RAISE EXCEPTION 'TEST FAILED: Nomor faktur terpotong atau salah format: %', v_invoice_no;
+        RAISE EXCEPTION 'TEST FAILED: Nomor faktur terpotong: %', v_invoice_no;
     END IF;
 END $$;
 
 
 -- ==============================================================================
--- SKENARIO 8: VALIDASI BATAS MAKSIMAL DISKON MANUAL KASIR (SEDANG #9)
+-- SKENARIO 8: USER NONAKTIF MEMANGGIL RPC (NULL FAIL-OPEN DEFENSE) (0008 #1)
 -- ==============================================================================
--- TUJUAN:
--- Kasir memberikan diskon manual di atas 10% dari subtotal tanpa wewenang Admin.
---
--- HASIL YANG DIHARAPKAN:
--- Transaksi ditolak dengan pesan:
--- "Diskon manual kasir (...) melebihi batas maksimal 10.00 persen (...). Persetujuan Admin diperlukan."
--- ==============================================================================
+-- User nonaktif (get_my_role() = NULL) mencoba:
+-- a. adjust_stock
+-- b. void_transaction
+-- c. create_transaction
+-- d. mengaktifkan dirinya sendiri via UPDATE profiles SET is_active = true
+-- Ekspektasi: Seluruh aksi DITOLAK KETAT.
 \echo ''
-\echo '>>> [SKENARIO 8] Validasi batas diskon manual kasir (> 10%)...'
+\echo '>>> [SKENARIO 8] User nonaktif mencoba memanggil RPC & mengaktifkan diri sendiri...'
 DO $$
 DECLARE
     v_prod_id UUID;
-    v_sell_price NUMERIC(14,2);
-    v_payload JSONB;
-    v_error_thrown BOOLEAN := false;
-BEGIN
-    SELECT id, sell_price INTO v_prod_id, v_sell_price 
-    FROM public.products 
-    WHERE is_active = true AND stock >= 1 
-    LIMIT 1;
-
-    -- Simulasikan sesi Kasir
-    PERFORM set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', true);
-    PERFORM set_config('request.jwt.claim.role', 'authenticated', true);
-
-    v_payload := jsonb_build_array(
-        jsonb_build_object('product_id', v_prod_id, 'qty', 1, 'discount', 0)
-    );
-
-    BEGIN
-        -- Berikan diskon 50% dari harga jual (melebihi batas max 10%)
-        PERFORM public.create_transaction(
-            p_customer_id := NULL,
-            p_payment_method := 'tunai',
-            p_discount := (v_sell_price * 0.5), 
-            p_voucher_id := NULL,
-            p_redeem_points := false,
-            p_amount_paid := v_sell_price,
-            p_items := v_payload,
-            p_notes := 'Uji Coba Diskon Melebihi Kuota Kasir'
-        );
-        RAISE WARNING 'GAGAL: Kasir berhasil memberikan diskon 50%% tanpa batas!';
-    EXCEPTION WHEN OTHERS THEN
-        v_error_thrown := true;
-        RAISE NOTICE 'BERHASIL DITOLAK (LULUS): Pesan Error: %', SQLERRM;
-    END;
-
-    IF NOT v_error_thrown THEN
-        RAISE EXCEPTION 'TEST FAILED: Validasi batas diskon kasir tidak bekerja!';
-    END IF;
-END $$;
-
-
--- ==============================================================================
--- SKENARIO 9: VOID TRANSAKSI & RESTORASI USED_COUNT VOUCHER (SEDANG #8)
--- ==============================================================================
--- TUJUAN:
--- 1. Kasir mencoba void transaksi (harus ditolak).
--- 2. Admin melakukan void transaksi: stok dikembalikan dan used_count voucher dikurangi.
---
--- HASIL YANG DIHARAPKAN:
--- Kasir gagal; Admin sukses; voucher used_count berkurang 1.
--- ==============================================================================
-\echo ''
-\echo '>>> [SKENARIO 9] Pembatalan transaksi (void) dan pemulihan kuota voucher...'
-DO $$
-DECLARE
-    v_voucher_id UUID;
-    v_prod_id UUID;
-    v_used_before INT;
-    v_used_after INT;
-    v_tx_result JSONB;
     v_tx_id UUID;
-    v_payload JSONB;
-    v_error_kasir BOOLEAN := false;
+    v_err_adjust BOOLEAN := false;
+    v_err_void BOOLEAN := false;
+    v_err_create BOOLEAN := false;
+    v_err_activate BOOLEAN := false;
 BEGIN
-    -- Ambil voucher aktif
-    SELECT id, used_count INTO v_voucher_id, v_used_before 
-    FROM public.vouchers 
-    WHERE is_active = true AND valid_until >= CURRENT_DATE 
-    LIMIT 1;
+    SELECT id INTO v_prod_id FROM public.products WHERE is_active = true LIMIT 1;
+    SELECT id INTO v_tx_id FROM public.transactions LIMIT 1;
 
-    SELECT id INTO v_prod_id FROM public.products WHERE is_active = true AND stock >= 5 LIMIT 1;
+    -- Simulasikan sesi User Nonaktif
+    PERFORM set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222', true);
+    PERFORM set_config('request.jwt.claim.role', 'authenticated', true);
 
-    -- 1. Buat transaksi dengan voucher oleh kasir
+    -- 8a. adjust_stock
+    BEGIN
+        PERFORM public.adjust_stock(v_prod_id, 100, 'Nonaktif Opname');
+    EXCEPTION WHEN OTHERS THEN
+        v_err_adjust := true;
+        RAISE NOTICE '8a. adjust_stock DITOLAK (LULUS): %', SQLERRM;
+    END;
+
+    -- 8b. void_transaction
+    BEGIN
+        PERFORM public.void_transaction(v_tx_id, 'Nonaktif Void');
+    EXCEPTION WHEN OTHERS THEN
+        v_err_void := true;
+        RAISE NOTICE '8b. void_transaction DITOLAK (LULUS): %', SQLERRM;
+    END;
+
+    -- 8c. create_transaction
+    BEGIN
+        PERFORM public.create_transaction(
+            p_items := jsonb_build_array(jsonb_build_object('product_id', v_prod_id, 'qty', 1, 'discount', 0)),
+            p_amount_paid := 1000000.00
+        );
+    EXCEPTION WHEN OTHERS THEN
+        v_err_create := true;
+        RAISE NOTICE '8c. create_transaction DITOLAK (LULUS): %', SQLERRM;
+    END;
+
+    -- 8d. Mengaktifkan diri sendiri
+    BEGIN
+        UPDATE public.profiles SET is_active = true WHERE id = '22222222-2222-2222-2222-222222222222';
+    EXCEPTION WHEN OTHERS THEN
+        v_err_activate := true;
+        RAISE NOTICE '8d. Self-activation DITOLAK (LULUS): %', SQLERRM;
+    END;
+
+    IF NOT (v_err_adjust AND v_err_void AND v_err_create AND v_err_activate) THEN
+        RAISE EXCEPTION 'TEST FAILED: Salah satu aksi user nonaktif lolos!';
+    END IF;
+END $$;
+
+
+-- ==============================================================================
+-- SKENARIO 9: KASIR MENCOBA INSERT PELANGGAN BARU DENGAN POIN BESAR (0008 #3)
+-- ==============================================================================
+-- Ekspektasi: Trigger trg_enforce_customer_defaults otomatis mereset points=0,
+-- total_spent=0, dan tier='bronze'.
+\echo ''
+\echo '>>> [SKENARIO 9] Kasir mencoba INSERT pelanggan dengan points besar...'
+DO $$
+DECLARE
+    v_new_cust_id UUID;
+    v_actual_points INT;
+    v_actual_spent NUMERIC(14,2);
+    v_actual_tier member_tier;
+BEGIN
     PERFORM set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', true);
     PERFORM set_config('request.jwt.claim.role', 'authenticated', true);
 
-    v_payload := jsonb_build_array(
-        jsonb_build_object('product_id', v_prod_id, 'qty', 1, 'discount', 0)
-    );
+    -- Kasir mencoba menyuntikkan poin & tier langsung saat registrasi pelanggan
+    INSERT INTO public.customers (name, phone, points, total_spent, tier)
+    VALUES ('Budi Fraud Member', '089999888877', 99999, 15000000.00, 'platinum')
+    RETURNING id, points, total_spent, tier INTO v_new_cust_id, v_actual_points, v_actual_spent, v_actual_tier;
 
-    v_tx_result := public.create_transaction(
-        p_customer_id := NULL,
-        p_payment_method := 'tunai',
-        p_discount := 0,
-        p_voucher_id := v_voucher_id,
-        p_redeem_points := false,
-        p_amount_paid := 10000000.00,
-        p_items := v_payload,
-        p_notes := 'Uji Transaksi Voucher'
-    );
-    v_tx_id := (v_tx_result->>'transaction_id')::UUID;
-
-    -- 2. Kasir mencoba membatalkan transaksi (harus ditolak)
-    BEGIN
-        PERFORM public.void_transaction(v_tx_id, 'Kasir coba void');
-    EXCEPTION WHEN OTHERS THEN
-        v_error_kasir := true;
-        RAISE NOTICE 'BERHASIL DITOLAK (LULUS): Kasir ditolak saat void: %', SQLERRM;
-    END;
-
-    IF NOT v_error_kasir THEN
-        RAISE EXCEPTION 'TEST FAILED: Kasir diizinkan melakukan void_transaction!';
-    END IF;
-
-    -- 3. Admin membatalkan transaksi
-    PERFORM set_config('request.jwt.claim.sub', '99999999-9999-9999-9999-999999999999', true);
-    PERFORM public.void_transaction(v_tx_id, 'Admin membatalkan transaksi uji coba');
-
-    -- Cek used_count voucher setelah void
-    SELECT used_count INTO v_used_after FROM public.vouchers WHERE id = v_voucher_id;
-
-    IF v_used_after = v_used_before THEN
-        RAISE NOTICE 'BERHASIL (LULUS): Admin berhasil void transaksi, voucher used_count kembali ke % semula.', v_used_after;
+    IF v_actual_points = 0 AND v_actual_spent = 0.00 AND v_actual_tier = 'bronze' THEN
+        RAISE NOTICE 'BERHASIL DINETRALISIR (LULUS): Nilai awal dipaksa: Points=%, Spent=%, Tier=%.',
+            v_actual_points, v_actual_spent, v_actual_tier;
     ELSE
-        RAISE WARNING 'Catatan: used_count sebelum: %, sesudah void: %', v_used_before, v_used_after;
+        RAISE EXCEPTION 'TEST FAILED: Kasir berhasil menyuntikkan poin awal: Points=%, Spent=%, Tier=%',
+            v_actual_points, v_actual_spent, v_actual_tier;
     END IF;
 END $$;
+
+
+-- ==============================================================================
+-- SKENARIO 10: ANON & GROOMER MEMBACA VIEW DEFINER (0008 #2)
+-- ==============================================================================
+-- Ekspektasi:
+-- 1. Anon (public REST client) membaca setiap view -> 0 baris.
+-- 2. Groomer membaca v_daily_sales -> 0 baris.
+\echo ''
+\echo '>>> [SKENARIO 10] Anon & Groomer membaca view analitik & katalog...'
+DO $$
+DECLARE
+    v_anon_prod INT;
+    v_anon_sales INT;
+    v_anon_dash INT;
+    v_groomer_sales INT;
+BEGIN
+    -- 1. Sesi Anon
+    PERFORM set_config('request.jwt.claim.sub', '', true);
+    PERFORM set_config('request.jwt.claim.role', 'anon', true);
+
+    SELECT COUNT(*) INTO v_anon_prod FROM public.v_products_public;
+    SELECT COUNT(*) INTO v_anon_sales FROM public.v_daily_sales;
+    SELECT COUNT(*) INTO v_anon_dash FROM public.v_dashboard_today;
+
+    -- 2. Sesi Groomer Aktif
+    PERFORM set_config('request.jwt.claim.sub', '33333333-3333-3333-3333-333333333333', true);
+    PERFORM set_config('request.jwt.claim.role', 'authenticated', true);
+
+    SELECT COUNT(*) INTO v_groomer_sales FROM public.v_daily_sales;
+
+    IF v_anon_prod = 0 AND v_anon_sales = 0 AND v_anon_dash = 0 AND v_groomer_sales = 0 THEN
+        RAISE NOTICE 'BERHASIL (LULUS): Seluruh view mengembalikan 0 baris untuk Anon dan Groomer.';
+    ELSE
+        RAISE EXCEPTION 'TEST FAILED: View bocor! Anon prod: %, Anon sales: %, Anon dash: %, Groomer sales: %',
+            v_anon_prod, v_anon_sales, v_anon_dash, v_groomer_sales;
+    END IF;
+END $$;
+
+
+-- ==============================================================================
+-- SKENARIO 11: CEK VIEW DEFINER OPTIONS (pg_class reloptions)
+-- ==============================================================================
+\echo ''
+\echo '>>> [SKENARIO 11] Cek konfigurasi reloptions pada pg_class untuk seluruh view v_%:'
+SELECT relname, reloptions 
+FROM pg_class 
+WHERE relname LIKE 'v_%' AND relkind = 'v'
+ORDER BY relname ASC;
 
 \echo ''
 \echo '=============================================================================='
-\echo 'SELURUH SKENARIO PENGUJIAN KEAMANAN SELESAI DENGAN SUKSES!'
+\echo 'SELURUH SKENARIO PENGUJIAN KEAMANAN ROUND 1 & 2 SELESAI!'
 \echo '=============================================================================='

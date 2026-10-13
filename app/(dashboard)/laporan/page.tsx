@@ -33,6 +33,7 @@ import { useToast } from "@/components/ui/Toast";
 import { useUserRole } from "@/context/UserContext";
 import { topSellingProducts } from "@/data/stats";
 import { Lock, ShieldAlert, Sparkles, CheckCircle2 } from "lucide-react";
+import { ProductImage } from "@/components/ui/ProductImage";
 
 export default function LaporanPage() {
   const { showToast } = useToast();
@@ -492,7 +493,14 @@ export default function LaporanPage() {
                 {topSellingProducts.map((p, idx) => (
                   <tr key={p.id} className="hover:bg-[#FAF8F5]/60 transition-colors">
                     <td className="py-3 px-4 sm:px-6 font-bold text-[#1F2937]">
-                      <span className="mr-2">{p.icon}</span> {p.nama}
+                      <div className="flex items-center gap-2.5">
+                        <ProductImage
+                          src={p.gambar || p.icon}
+                          alt={p.nama}
+                          size="xs"
+                        />
+                        <span>{p.nama}</span>
+                      </div>
                     </td>
                     <td className="py-3 px-3 text-[#6B7280]">{p.kategori}</td>
                     <td className="py-3 px-3 text-center font-bold">{p.terjual} pcs</td>

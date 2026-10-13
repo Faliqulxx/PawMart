@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FEFCBF"/>
+      <stop offset="100%" stop-color="#FAF089"/>
+    </linearGradient>
+    <linearGradient id="bag3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ECC94B"/>
+      <stop offset="100%" stop-color="#D69E2E"/>
+    </linearGradient>
+    <filter id="shadow3" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#744210" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+  <rect width="240" height="240" rx="20" fill="url(#bg3)"/>
+  <g filter="url(#shadow3)">
+    <path d="M70 65 L85 45 L155 45 L170 65 L165 195 L75 195 Z" fill="url(#bag3)"/>
+    <path d="M85 45 L120 52 L155 45 L145 65 L95 65 Z" fill="#975A16"/>
+    <!-- Label -->
+    <rect x="85" y="78" width="70" height="75" rx="8" fill="#FFFFFF"/>
+    <rect x="90" y="86" width="60" height="14" rx="4" fill="#C53030"/>
+    <text x="120" y="96" font-family="system-ui, sans-serif" font-size="9" font-weight="900" fill="#FFFFFF" text-anchor="middle">PEDIGREE</text>
+    <!-- Dog paw on label -->
+    <ellipse cx="120" cy="126" rx="9" ry="8" fill="#D69E2E"/>
+    <circle cx="111" cy="115" r="3.5" fill="#D69E2E"/>
+    <circle cx="120" cy="113" r="3.5" fill="#D69E2E"/>
+    <circle cx="129" cy="115" r="3.5" fill="#D69E2E"/>
+    <text x="120" y="146" font-family="system-ui, sans-serif" font-size="8" font-weight="bold" fill="#744210" text-anchor="middle">Beef &amp; Veg</text>
+    <rect x="100" y="165" width="40" height="18" rx="9" fill="#2B6CB0"/>
+    <text x="120" y="177" font-family="system-ui, sans-serif" font-size="9" font-weight="900" fill="#FFFFFF" text-anchor="middle">1 KG</text>
+  </g>
+  <text x="120" y="222" font-family="system-ui, sans-serif" font-size="11" font-weight="bold" fill="#4A5568" text-anchor="middle">Adult Dog Formula</text>
+</svg>

@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg7" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F0FFF4"/>
+      <stop offset="100%" stop-color="#DCFCE7"/>
+    </linearGradient>
+    <linearGradient id="sandbag" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38A169"/>
+      <stop offset="100%" stop-color="#22543D"/>
+    </linearGradient>
+    <filter id="shadow7" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#22543D" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+  <rect width="240" height="240" rx="20" fill="url(#bg7)"/>
+  <g filter="url(#shadow7)">
+    <!-- Sand Sack -->
+    <path d="M68 70 L80 50 L160 50 L172 70 L168 190 L72 190 Z" fill="url(#sandbag)"/>
+    <!-- Handle -->
+    <path d="M100 50 C100 35 140 35 140 50" fill="none" stroke="#22543D" stroke-width="6"/>
+    <!-- Label -->
+    <rect x="85" y="80" width="70" height="75" rx="8" fill="#FFFFFF"/>
+    <text x="120" y="96" font-family="system-ui, sans-serif" font-size="9" font-weight="900" fill="#22543D" text-anchor="middle">BENTONITE</text>
+    <!-- Apple icon -->
+    <circle cx="120" cy="120" r="14" fill="#48BB78"/>
+    <path d="M120 106 C124 100 128 102 128 102" stroke="#744210" stroke-width="2" fill="none"/>
+    <path d="M122 104 C126 102 128 105 128 105" fill="#38A169"/>
+    <text x="120" y="145" font-family="system-ui, sans-serif" font-size="8" font-weight="bold" fill="#2F855A" text-anchor="middle">Aroma Apel</text>
+    <!-- Volume Badge -->
+    <rect x="100" y="165" width="40" height="18" rx="9" fill="#ED8936"/>
+    <text x="120" y="177" font-family="system-ui, sans-serif" font-size="9" font-weight="900" fill="#FFFFFF" text-anchor="middle">10 L</text>
+  </g>
+  <text x="120" y="222" font-family="system-ui, sans-serif" font-size="11" font-weight="bold" fill="#4A5568" text-anchor="middle">Gumpal Wangi Bebas Debu</text>
+</svg>

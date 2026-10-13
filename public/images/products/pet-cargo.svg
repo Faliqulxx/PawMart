@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg12" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EBF8FF"/>
+      <stop offset="100%" stop-color="#E2E8F0"/>
+    </linearGradient>
+    <linearGradient id="cargotop" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ED8936"/>
+      <stop offset="100%" stop-color="#DD6B20"/>
+    </linearGradient>
+    <linearGradient id="cargobottom" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F7FAFC"/>
+      <stop offset="100%" stop-color="#E2E8F0"/>
+    </linearGradient>
+    <filter id="shadow12" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#7B341E" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  <rect width="240" height="240" rx="20" fill="url(#bg12)"/>
+  <g filter="url(#shadow12)">
+    <!-- Top Shell -->
+    <path d="M55 120 C55 80 85 68 120 68 C155 68 185 80 185 120 Z" fill="url(#cargotop)"/>
+    <!-- Bottom Shell -->
+    <path d="M55 120 L58 175 C58 180 65 185 75 185 L165 185 C175 185 182 180 182 175 L185 120 Z" fill="url(#cargobottom)"/>
+    <!-- Join Rim / Seam -->
+    <rect x="52" y="116" width="136" height="8" rx="3" fill="#2D3748"/>
+    <!-- Top Handle -->
+    <path d="M102 68 C102 50 138 50 138 68" fill="none" stroke="#2D3748" stroke-width="6"/>
+    <!-- Front Metal Gate / Grille -->
+    <rect x="80" y="90" width="80" height="75" rx="8" fill="#1A202C"/>
+    <line x1="95" y1="92" x2="95" y2="163" stroke="#CBD5E0" stroke-width="2.5"/>
+    <line x1="110" y1="92" x2="110" y2="163" stroke="#CBD5E0" stroke-width="2.5"/>
+    <line x1="125" y1="92" x2="125" y2="163" stroke="#CBD5E0" stroke-width="2.5"/>
+    <line x1="140" y1="92" x2="140" y2="163" stroke="#CBD5E0" stroke-width="2.5"/>
+    <line x1="82" y1="110" x2="158" y2="110" stroke="#CBD5E0" stroke-width="2.5"/>
+    <line x1="82" y1="140" x2="158" y2="140" stroke="#CBD5E0" stroke-width="2.5"/>
+    <!-- Air vents on sides -->
+    <circle cx="68" cy="98" r="3" fill="#C05621"/>
+    <circle cx="68" cy="108" r="3" fill="#C05621"/>
+    <circle cx="172" cy="98" r="3" fill="#C05621"/>
+    <circle cx="172" cy="108" r="3" fill="#C05621"/>
+  </g>
+  <rect x="65" y="195" width="110" height="20" rx="10" fill="#DD6B20"/>
+  <text x="120" y="209" font-family="system-ui, sans-serif" font-size="10" font-weight="bold" fill="#FFFFFF" text-anchor="middle">Pet Cargo Travel Box</text>
+</svg>

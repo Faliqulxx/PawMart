@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FAF5FF"/>
+      <stop offset="100%" stop-color="#F3E8FF"/>
+    </linearGradient>
+    <linearGradient id="bag2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#805AD5"/>
+      <stop offset="100%" stop-color="#553C9A"/>
+    </linearGradient>
+    <filter id="shadow2" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#44337A" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+  <rect width="240" height="240" rx="20" fill="url(#bg2)"/>
+  <g filter="url(#shadow2)">
+    <!-- Bag -->
+    <path d="M70 65 L85 45 L155 45 L170 65 L165 195 L75 195 Z" fill="url(#bag2)"/>
+    <path d="M85 45 L120 52 L155 45 L145 65 L95 65 Z" fill="#44337A"/>
+    <!-- Label -->
+    <rect x="85" y="78" width="70" height="75" rx="8" fill="#FFFFFF"/>
+    <rect x="92" y="86" width="56" height="14" rx="4" fill="#D69E2E"/>
+    <text x="120" y="96" font-family="system-ui, sans-serif" font-size="9" font-weight="900" fill="#FFFFFF" text-anchor="middle">WHISKAS</text>
+    <!-- Fish icon on label -->
+    <path d="M106 122 C114 116 126 116 134 122 C138 120 142 116 142 116 C142 122 138 126 134 128 C126 134 114 134 106 128 C102 125 106 122 106 122 Z" fill="#3182CE"/>
+    <circle cx="112" cy="122" r="1.5" fill="#FFFFFF"/>
+    <text x="120" y="145" font-family="system-ui, sans-serif" font-size="8" font-weight="bold" fill="#553C9A" text-anchor="middle">Tuna Adult</text>
+    <!-- Badge -->
+    <rect x="100" y="165" width="40" height="18" rx="9" fill="#38A169"/>
+    <text x="120" y="177" font-family="system-ui, sans-serif" font-size="9" font-weight="900" fill="#FFFFFF" text-anchor="middle">1 KG</text>
+  </g>
+  <text x="120" y="222" font-family="system-ui, sans-serif" font-size="11" font-weight="bold" fill="#4A5568" text-anchor="middle">Ocean Fish &amp; Tuna</text>
+</svg>

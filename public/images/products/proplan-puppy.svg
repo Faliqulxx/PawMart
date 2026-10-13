@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EDF2F7"/>
+      <stop offset="100%" stop-color="#E2E8F0"/>
+    </linearGradient>
+    <linearGradient id="bag4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2D3748"/>
+      <stop offset="100%" stop-color="#1A202C"/>
+    </linearGradient>
+    <filter id="shadow4" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#1A202C" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  <rect width="240" height="240" rx="20" fill="url(#bg4)"/>
+  <g filter="url(#shadow4)">
+    <path d="M70 65 L85 45 L155 45 L170 65 L165 195 L75 195 Z" fill="url(#bag4)"/>
+    <path d="M85 45 L120 52 L155 45 L145 65 L95 65 Z" fill="#171923"/>
+    <!-- Label -->
+    <rect x="85" y="78" width="70" height="75" rx="8" fill="#FFFFFF"/>
+    <rect x="90" y="86" width="60" height="14" rx="4" fill="#C9772E"/>
+    <text x="120" y="96" font-family="system-ui, sans-serif" font-size="8" font-weight="900" fill="#FFFFFF" text-anchor="middle">PRO PLAN</text>
+    <!-- Puppy badge -->
+    <circle cx="120" cy="120" r="14" fill="#EBF8FF"/>
+    <text x="120" y="124" font-family="system-ui, sans-serif" font-size="8" font-weight="bold" fill="#2B6CB0" text-anchor="middle">OPTISTART</text>
+    <text x="120" y="145" font-family="system-ui, sans-serif" font-size="8" font-weight="bold" fill="#2D3748" text-anchor="middle">Puppy Chicken</text>
+    <rect x="95" y="165" width="50" height="18" rx="9" fill="#DD6B20"/>
+    <text x="120" y="177" font-family="system-ui, sans-serif" font-size="9" font-weight="900" fill="#FFFFFF" text-anchor="middle">2.5 KG</text>
+  </g>
+  <text x="120" y="222" font-family="system-ui, sans-serif" font-size="11" font-weight="bold" fill="#4A5568" text-anchor="middle">Puppy Growth Formula</text>
+</svg>

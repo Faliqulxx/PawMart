@@ -4,6 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { topSellingProducts } from "@/data/stats";
 import { formatRupiah } from "@/lib/format";
 import { Trophy, ChevronRight } from "lucide-react";
+import { ProductImage } from "@/components/ui/ProductImage";
 
 export function TopProducts() {
   return (
@@ -45,9 +46,12 @@ export function TopProducts() {
                   {idx + 1}
                 </span>
 
-                <div className="w-9 h-9 rounded-xl bg-[#F7F5F1] border border-[#ECE8E1] flex items-center justify-center text-lg shrink-0">
-                  {item.icon}
-                </div>
+                <ProductImage
+                  src={item.gambar || item.icon}
+                  alt={item.nama}
+                  size="sm"
+                  className="group-hover:scale-105 transition-transform"
+                />
 
                 <div className="min-w-0">
                   <p className="text-xs sm:text-sm font-semibold text-[#1F2937] truncate group-hover:text-[#C9772E] transition-colors">

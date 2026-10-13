@@ -58,48 +58,55 @@ export interface TopProductSummary {
   kategori: string;
   terjual: number;
   pendapatan: number;
+  gambar: string;
   icon: string;
 }
 
 export const topSellingProducts: TopProductSummary[] = [
   {
     id: "PROD-001",
-    nama: "Royal Canin Adult",
+    nama: "Royal Canin Adult Cat",
     kategori: "Makanan Kucing 1kg",
     terjual: 32,
     pendapatan: 4640000,
-    icon: "🐱",
+    gambar: "/images/products/royal-canin-cat.svg",
+    icon: "/images/products/royal-canin-cat.svg",
   },
   {
     id: "PROD-002",
-    nama: "Whiskas Tuna",
+    nama: "Whiskas Tuna Adult",
     kategori: "Makanan Kucing 1kg",
     terjual: 28,
     pendapatan: 1820000,
-    icon: "🐟",
+    gambar: "/images/products/whiskas-tuna.svg",
+    icon: "/images/products/whiskas-tuna.svg",
   },
   {
     id: "PROD-003",
-    nama: "Pedigree Adult Beef",
+    nama: "Pedigree Adult Beef & Veg",
     kategori: "Makanan Anjing 1kg",
     terjual: 20,
     pendapatan: 1500000,
-    icon: "🐶",
+    gambar: "/images/products/pedigree-beef.svg",
+    icon: "/images/products/pedigree-beef.svg",
   },
   {
-    id: "PROD-004",
+    id: "PROD-005",
     nama: "Tempat Makan Stainless Anti-Semut",
     kategori: "Aksesoris",
     terjual: 15,
     pendapatan: 675000,
-    icon: "🥣",
+    gambar: "/images/products/bowl-stainless.svg",
+    icon: "/images/products/bowl-stainless.svg",
   },
   {
-    id: "PROD-005",
+    id: "PROD-006",
     nama: "Mainan Kucing Laser & Bulu",
     kategori: "Aksesoris",
     terjual: 12,
     pendapatan: 420000,
-    icon: "🎾",
+    gambar: "/images/products/toy-laser.svg",
+    icon: "/images/products/toy-laser.svg",
   },
 ];
+

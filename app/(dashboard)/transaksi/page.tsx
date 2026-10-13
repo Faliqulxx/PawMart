@@ -32,7 +32,8 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
-import { initialProducts, categories, Product } from "@/data/products";
+import { initialProducts, categories, Product, PAWMART_PRODUCTS_KEY } from "@/data/products";
+import { ProductImage } from "@/components/ui/ProductImage";
 import { initialCustomers, Customer } from "@/data/customers";
 import { initialTransactions, Transaction, TransactionItem } from "@/data/transactions";
 import { formatRupiah, formatTanggal } from "@/lib/format";
@@ -73,8 +74,26 @@ export default function TransaksiPage() {
   const [activeTab, setActiveTab] = useState<"pos" | "riwayat" | "ditahan">("pos");
 
   // Product Catalog State
+  const [products, setProducts] = useState<Product[]>(initialProducts);
   const [searchProduct, setSearchProduct] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("Semua");
+
+  // Load products from localStorage if available
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(PAWMART_PRODUCTS_KEY);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setProducts(parsed);
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  }, []);
 
   // Cart State
   const [cart, setCart] = useState<CartItemState[]>([]);
@@ -130,7 +149,8 @@ export default function TransaksiPage() {
             stok: 99,
             stokMin: 0,
             satuan: "Paket",
-            icon: pending.source === "boarding" ? "🏨" : "✂️",
+            gambar: pending.source === "boarding" ? "/images/products/cage-iron.svg" : "/images/products/bowl-stainless.svg",
+            icon: pending.source === "boarding" ? "/images/products/cage-iron.svg" : "/images/products/bowl-stainless.svg",
           };
 
           setCart((prev) => [...prev, { product: srvProduct, qty: 1 }]);
@@ -152,7 +172,7 @@ export default function TransaksiPage() {
 
   // Filter Catalog Products
   const filteredProducts = useMemo(() => {
-    return initialProducts.filter((p) => {
+    return products.filter((p) => {
       const matchCat =
         selectedCategory === "Semua" || p.kategori === selectedCategory;
       const matchQuery =
@@ -161,7 +181,7 @@ export default function TransaksiPage() {
         p.barcode.toLowerCase().includes(searchProduct.toLowerCase());
       return matchCat && matchQuery;
     });
-  }, [searchProduct, selectedCategory]);
+  }, [products, searchProduct, selectedCategory]);
 
   // Cart Subtotal Calculation (uses customPrice if set by Admin)
   const subtotal = useMemo(() => {
@@ -555,9 +575,12 @@ export default function TransaksiPage() {
                     <div className="p-3 sm:p-4">
                       {/* Product Header & Emoji */}
                       <div className="flex items-start justify-between gap-1 mb-2">
-                        <div className="w-12 h-12 rounded-xl bg-[#FAF8F5] border border-[#ECE8E1] flex items-center justify-center text-2xl group-hover:scale-105 transition-transform">
-                          {prod.icon}
-                        </div>
+                        <ProductImage
+                          src={prod.gambar || prod.icon}
+                          alt={prod.nama}
+                          size="lg"
+                          className="group-hover:scale-105 transition-transform"
+                        />
                         {isOutOfStock ? (
                           <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#FEE2E2] text-[#E5484D]">
                             Habis

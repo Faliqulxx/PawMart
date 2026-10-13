@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Layers,
   AlertTriangle,
@@ -20,7 +20,8 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
-import { initialProducts, Product } from "@/data/products";
+import { initialProducts, Product, PAWMART_PRODUCTS_KEY } from "@/data/products";
+import { ProductImage } from "@/components/ui/ProductImage";
 import { initialStockMutations, StockMutation } from "@/data/stockMutations";
 import { formatTanggal, formatRupiah } from "@/lib/format";
 import { useToast } from "@/components/ui/Toast";
@@ -35,6 +36,23 @@ export default function StokPage() {
   const [mutations, setMutations] = useState<StockMutation[]>(initialStockMutations);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<"Semua" | "Aman" | "Menipis" | "Habis">("Semua");
+
+  // Load products from localStorage if available
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(PAWMART_PRODUCTS_KEY);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setProducts(parsed);
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  }, []);
 
   // Adjustment Modal State
   const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
@@ -94,9 +112,13 @@ export default function StokPage() {
     }
 
     // Update Product Stock
-    setProducts((prev) =>
-      prev.map((p) => (p.id === selectedProduct.id ? { ...p, stok: newStock } : p))
-    );
+    setProducts((prev) => {
+      const updated = prev.map((p) => (p.id === selectedProduct.id ? { ...p, stok: newStock } : p));
+      if (typeof window !== "undefined") {
+        localStorage.setItem(PAWMART_PRODUCTS_KEY, JSON.stringify(updated));
+      }
+      return updated;
+    });
 
     // Add Mutation Log
     const newMutation: StockMutation = {
@@ -335,7 +357,11 @@ export default function StokPage() {
                         >
                           <td className="py-3.5 px-4 sm:px-6">
                             <div className="flex items-center gap-3">
-                              <span className="text-xl">{p.icon}</span>
+                              <ProductImage
+                                src={p.gambar || p.icon}
+                                alt={p.nama}
+                                size="sm"
+                              />
                               <div>
                                 <p className="font-bold text-[#1F2937]">{p.nama}</p>
                                 <span className="text-[11px] text-[#9CA3AF] font-mono">

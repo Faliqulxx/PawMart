@@ -106,61 +106,59 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#F87D19] flex flex-col justify-between overflow-x-hidden select-none relative">
-      {/* Main Split Layout */}
-      <main className="flex-1 flex flex-col lg:flex-row items-center justify-between w-full max-w-[1520px] mx-auto px-4 sm:px-8 lg:px-12 py-4 lg:py-6 gap-6 lg:gap-8">
+    <div className="min-h-screen w-full bg-[#F87D19] flex items-center justify-center p-8 sm:p-10 lg:p-12 overflow-x-hidden select-none">
+      {/* Full-Screen Two-Column Grid Container */}
+      <div className="w-full max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,1.5fr)_minmax(380px,0.9fr)] gap-8 lg:gap-10 xl:gap-12 items-center">
         
-        {/* Left Area: Illustration of Dogs, Cats, and Pet Shop Accessories */}
-        <div className="flex-1 w-full flex items-end justify-center lg:justify-start relative min-h-[300px] sm:min-h-[420px] lg:min-h-[680px] xl:min-h-[740px]">
-          <div className="relative w-full h-[320px] sm:h-[460px] lg:h-[680px] xl:h-[760px] max-w-4xl">
-            <Image
-              src="/loginpage.jpg"
-              alt="Paw Palace Pet Shop Illustration"
-              fill
-              priority
-              sizes="(max-width: 1024px) 100vw, 60vw"
-              className="object-contain object-bottom drop-shadow-xl"
-            />
-          </div>
+        {/* PANEL KIRI: Visual Pet Shop Panel Utama */}
+        <div className="w-full h-48 sm:h-64 lg:h-[min(680px,calc(100vh-64px))] rounded-[24px] overflow-hidden relative shadow-2xl shadow-orange-950/20 border border-white/20">
+          <Image
+            src="/loginpage.jpg"
+            alt="Paw Palace Pet Shop Illustration"
+            fill
+            priority
+            sizes="(max-width: 1024px) 100vw, 60vw"
+            className="object-cover object-[center_65%]"
+          />
         </div>
 
-        {/* Right Area: Floating Clean White Card */}
-        <div className="w-full lg:w-[440px] xl:w-[470px] shrink-0 flex items-center justify-center my-auto z-10 pb-6 lg:pb-0">
-          <div className="w-full bg-white rounded-[36px] shadow-2xl shadow-orange-950/30 px-8 py-9 sm:px-10 sm:py-11 border border-white/60 relative">
+        {/* PANEL KANAN: Login Card */}
+        <div className="w-full flex items-center justify-center lg:justify-start">
+          <div className="w-full max-w-[440px] bg-white rounded-[26px] shadow-2xl shadow-orange-950/25 p-8 sm:p-10 border border-white/80">
             
-            {/* Header: Paw Palace My Pet Shop Logo */}
-            <div className="flex items-center justify-center gap-3.5 mb-6">
-              <PawPalaceLogoIcon className="w-12 h-12 shrink-0" />
+            {/* Logo Paw Palace */}
+            <div className="flex items-center gap-3.5 mb-5 text-left">
+              <PawPalaceLogoIcon className="w-11 h-11 shrink-0" />
               <div className="text-left flex flex-col justify-center">
-                <h1 className="text-xl sm:text-2xl font-black text-[#1F2937] tracking-tight uppercase leading-tight font-sans">
+                <h1 className="text-xl sm:text-2xl font-black text-[#1F2937] tracking-tight uppercase leading-none font-sans">
                   PAW PALACE
                 </h1>
-                <span className="text-xs sm:text-sm font-extrabold text-[#1F2937] tracking-wider uppercase opacity-90 leading-tight">
+                <span className="text-[11px] sm:text-xs font-black text-[#1F2937] tracking-wider uppercase opacity-90 mt-1 leading-none">
                   MY PET SHOP
                 </span>
               </div>
             </div>
 
-            {/* Greetings */}
-            <div className="text-center mb-7">
-              <h2 className="text-2xl sm:text-3xl font-black text-[#1F2937] tracking-tight">
+            {/* Judul & Subtitle - Alignment Kiri Konsisten */}
+            <div className="text-left mb-6">
+              <h2 className="text-2xl sm:text-3xl font-black text-[#1F2937] tracking-tight leading-tight">
                 Selamat Datang!
               </h2>
-              <p className="text-xs sm:text-sm text-[#6B7280] font-normal mt-1.5">
+              <p className="text-xs sm:text-sm text-[#6B7280] font-normal mt-1 leading-normal">
                 Silakan masuk ke akun Anda
               </p>
             </div>
 
-            {/* Error Message if any */}
+            {/* Pesan Kesalahan jika ada */}
             {errorMessage && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs font-medium text-center">
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs font-medium text-left">
                 {errorMessage}
               </div>
             )}
 
-            {/* Login Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Input 1: Email atau Username */}
+            {/* Form Login */}
+            <form onSubmit={handleSubmit} className="space-y-4 text-left">
+              {/* Field 1: Email / Username */}
               <div>
                 <div className="relative rounded-xl border border-[#D1D5DB] focus-within:border-[#F87D19] focus-within:ring-2 focus-within:ring-[#F87D19]/20 bg-white transition-all">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B7280]">
@@ -175,12 +173,12 @@ export default function LoginPage() {
                     }}
                     placeholder="Email atau Username"
                     disabled={isLoading}
-                    className="w-full pl-11 pr-4 py-3 text-sm text-[#1F2937] placeholder-[#9CA3AF] rounded-xl bg-transparent outline-none transition-colors"
+                    className="w-full pl-11 pr-4 py-2.5 sm:py-3 text-sm text-[#1F2937] placeholder-[#9CA3AF] rounded-xl bg-transparent outline-none transition-colors"
                   />
                 </div>
               </div>
 
-              {/* Input 2: Password */}
+              {/* Field 2: Password */}
               <div>
                 <div className="relative rounded-xl border border-[#D1D5DB] focus-within:border-[#F87D19] focus-within:ring-2 focus-within:ring-[#F87D19]/20 bg-white transition-all">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B7280]">
@@ -195,7 +193,7 @@ export default function LoginPage() {
                     }}
                     placeholder="Password"
                     disabled={isLoading}
-                    className="w-full pl-11 pr-11 py-3 text-sm text-[#1F2937] placeholder-[#9CA3AF] rounded-xl bg-transparent outline-none transition-colors"
+                    className="w-full pl-11 pr-11 py-2.5 sm:py-3 text-sm text-[#1F2937] placeholder-[#9CA3AF] rounded-xl bg-transparent outline-none transition-colors"
                   />
                   <button
                     type="button"
@@ -212,9 +210,9 @@ export default function LoginPage() {
                   </button>
                 </div>
 
-                {/* Forgot Password Right-Aligned Link */}
+                {/* Ingat Saya & Lupa Kata Sandi */}
                 <div className="flex items-center justify-between mt-2.5 px-0.5">
-                  <label className="flex items-center gap-2 cursor-pointer select-none text-[11px] text-[#6B7280]">
+                  <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-[#6B7280]">
                     <input
                       type="checkbox"
                       checked={rememberMe}
@@ -234,11 +232,11 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* Action Button: MASUK */}
+              {/* Tombol MASUK */}
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full mt-5 py-3.5 px-6 rounded-full bg-[#F87D19] hover:bg-[#E56E0D] active:bg-[#D46006] text-white font-black text-sm sm:text-base tracking-widest uppercase shadow-lg shadow-[#F87D19]/35 hover:shadow-xl hover:shadow-[#F87D19]/45 transition-all transform active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed"
+                className="w-full mt-4 py-3 sm:py-3.5 px-6 rounded-full bg-[#F87D19] hover:bg-[#E56E0D] active:bg-[#D46006] text-white font-black text-sm tracking-widest uppercase shadow-md shadow-[#F87D19]/30 hover:shadow-lg hover:shadow-[#F87D19]/40 transition-all transform active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
                   <>
@@ -266,75 +264,54 @@ export default function LoginPage() {
               </button>
             </form>
 
-            {/* Dedicated Demo Accounts for Testing */}
-            <div className="mt-6 pt-5 border-t border-[#ECE8E1]">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-bold text-[#6B7280] uppercase tracking-wider flex items-center gap-1.5">
-                  <Sparkles size={12} className="text-[#F87D19]" />
-                  Akses Akun Demo
-                </span>
-                <span className="text-[10px] bg-orange-100 text-[#C9772E] px-2 py-0.5 rounded-full font-semibold">
-                  1-Klik Masuk
-                </span>
-              </div>
+            {/* Compact Demo Account Selector */}
+            <div className="mt-6 pt-5 border-t border-[#ECE8E1] text-left">
+              <span className="text-[10px] font-black text-[#6B7280] uppercase tracking-wider block mb-2.5">
+                AKSES AKUN DEMO
+              </span>
 
               <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
                   onClick={() => handleQuickLogin("USR-001")}
                   disabled={isLoading}
-                  className="p-2 rounded-xl border border-[#ECE8E1] hover:border-[#F87D19] hover:bg-orange-50/60 transition-all text-left group cursor-pointer"
-                  title="Masuk sebagai Akun Owner (Budi Hartono)"
+                  className="py-2 px-2 rounded-xl border border-[#ECE8E1] hover:border-[#F87D19] hover:bg-orange-50/70 transition-all flex items-center justify-center gap-1.5 font-bold text-xs text-[#1F2937] hover:text-[#F87D19] cursor-pointer"
+                  title="Masuk sebagai Owner (Budi Hartono)"
                 >
-                  <div className="flex items-center gap-1.5 font-bold text-xs text-[#1F2937] group-hover:text-[#F87D19]">
-                    <Crown size={14} className="text-amber-500 shrink-0" />
-                    <span className="truncate">Owner</span>
-                  </div>
-                  <p className="text-[9px] text-[#6B7280] mt-0.5 truncate">
-                    owner@pawmart.id
-                  </p>
+                  <Crown size={14} className="text-amber-500 shrink-0" />
+                  <span>Owner</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => handleQuickLogin("USR-002")}
                   disabled={isLoading}
-                  className="p-2 rounded-xl border border-[#ECE8E1] hover:border-[#F87D19] hover:bg-orange-50/60 transition-all text-left group cursor-pointer"
-                  title="Masuk sebagai Akun Kasir (Maya Kasir)"
+                  className="py-2 px-2 rounded-xl border border-[#ECE8E1] hover:border-[#F87D19] hover:bg-orange-50/70 transition-all flex items-center justify-center gap-1.5 font-bold text-xs text-[#1F2937] hover:text-[#F87D19] cursor-pointer"
+                  title="Masuk sebagai Kasir (Maya Kasir)"
                 >
-                  <div className="flex items-center gap-1.5 font-bold text-xs text-[#1F2937] group-hover:text-[#F87D19]">
-                    <Calculator size={14} className="text-blue-500 shrink-0" />
-                    <span className="truncate">Kasir</span>
-                  </div>
-                  <p className="text-[9px] text-[#6B7280] mt-0.5 truncate">
-                    kasir@pawmart.id
-                  </p>
+                  <Calculator size={14} className="text-blue-500 shrink-0" />
+                  <span>Kasir</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => handleQuickLogin("USR-003")}
                   disabled={isLoading}
-                  className="p-2 rounded-xl border border-[#ECE8E1] hover:border-[#F87D19] hover:bg-orange-50/60 transition-all text-left group cursor-pointer"
-                  title="Masuk sebagai Akun Groomer (Rifki Groomer)"
+                  className="py-2 px-2 rounded-xl border border-[#ECE8E1] hover:border-[#F87D19] hover:bg-orange-50/70 transition-all flex items-center justify-center gap-1.5 font-bold text-xs text-[#1F2937] hover:text-[#F87D19] cursor-pointer"
+                  title="Masuk sebagai Groomer (Rifki Groomer)"
                 >
-                  <div className="flex items-center gap-1.5 font-bold text-xs text-[#1F2937] group-hover:text-[#F87D19]">
-                    <Scissors size={14} className="text-emerald-500 shrink-0" />
-                    <span className="truncate">Groomer</span>
-                  </div>
-                  <p className="text-[9px] text-[#6B7280] mt-0.5 truncate">
-                    groomer@pawmart.id
-                  </p>
+                  <Scissors size={14} className="text-emerald-500 shrink-0" />
+                  <span>Groomer</span>
                 </button>
               </div>
 
-              <p className="text-[10px] text-center text-[#9CA3AF] mt-3">
-                Sistem RBAC Aktif • Hak akses & UI terkunci sesuai akun yang login
+              <p className="text-[10.5px] text-center text-[#9CA3AF] mt-2.5">
+                Klik untuk masuk sebagai akun demo
               </p>
             </div>
           </div>
         </div>
-      </main>
+      </div>
 
       {/* Forgot Password Modal */}
       {showForgotModal && (
